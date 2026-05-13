@@ -2,7 +2,7 @@ import axios from "axios";
 
 // 🔗 Base URL of our backend
 const API = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: "https://cinestream-backend-ng16.onrender.com/api",
   withCredentials: true,
 });
 

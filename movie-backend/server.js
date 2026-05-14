@@ -1,6 +1,5 @@
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
@@ -8,7 +7,8 @@ import movieRoutes from "./routes/movieRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 
-dotenv.config();
+// ✅ Remove dotenv import — Render injects env vars directly
+
 connectDB();
 
 const app = express();

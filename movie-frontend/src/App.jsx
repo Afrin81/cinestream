@@ -13,6 +13,7 @@ import Admin from "./pages/Admin";
 import MoodPicker from "./components/MoodPicker";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
+import PaymentSuccess from "./pages/PaymentSuccess";
 
 function App() {
   const { theme } = useTheme();
@@ -31,6 +32,7 @@ function App() {
             <Route path="/watchlist" element={<Watchlist />} />
             <Route path="/payment"   element={<Payment />} />
             <Route path="/admin"     element={<Admin />} />
+            <Route path="/payment/success" element={<PaymentSuccess />} />
           </Routes>
         </div>
         <Footer />

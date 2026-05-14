@@ -124,30 +124,25 @@ function Payment() {
 
   // 💳 Handle payment — connects to real backend
   const handlePayment = async () => {
-    if (selectedPlan === "free") return;
-    setLoading(true);
-    setError("");
+  if (selectedPlan === "free") return;
+  setLoading(true);
+  setError("");
 
-    try {
-      // ✅ Call real backend API
-      const response = await API.post("/payment/subscribe", {
-        plan: selectedPlan,
-      });
+  try {
+    // ✅ Call real SSLCommerz payment
+    const response = await API.post("/payment/init", {
+      plan: selectedPlan,
+    });
 
-      if (response.data.success) {
-        // ✅ Update user in localStorage and AuthContext
-        const updatedUser = updateCurrentUser(response.data.user);
-        login(updatedUser); // update AuthContext so isPremium is true immediately
-
-        setSuccess(true);
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || "Payment failed. Please try again.");
+    if (response.data.success) {
+      // ✅ Redirect to SSLCommerz payment page
+      window.location.href = response.data.paymentUrl;
     }
-
+  } catch (err) {
+    setError(err.response?.data?.message || "Payment failed. Please try again.");
     setLoading(false);
-  };
-
+  }
+};
   // ✅ Success screen
   if (success) {
     return (

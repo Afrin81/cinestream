@@ -1,77 +1,78 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
-
-const featuredMovies = [
-  {
-    id: 1,
-    title: "Avengers",
-    genre: "Action",
-    rating: 4.8,
-    year: 2012,
-    duration: "2h 23m",
-    isPremium: false,
-    description: "Earth's mightiest heroes must come together and learn to fight as a team to stop the mischievous Loki and his alien army from enslaving humanity.",
-    banner: "https://images.unsplash.com/photo-1574267432553-4b4628081c31?w=1920",
-  },
-  {
-    id: 4,
-    title: "Interstellar",
-    genre: "Sci-Fi",
-    rating: 4.9,
-    year: 2014,
-    duration: "2h 49m",
-    isPremium: true,
-    description: "A team of explorers travel through a wormhole in space in an attempt to ensure humanity's survival as Earth faces an environmental collapse.",
-    banner: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=1920",
-  },
-  {
-    id: 7,
-    title: "Inception",
-    genre: "Sci-Fi",
-    rating: 4.9,
-    year: 2010,
-    duration: "2h 28m",
-    isPremium: true,
-    description: "A thief who steals corporate secrets through dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.",
-    banner: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=1920",
-  },
-  {
-    id: 3,
-    title: "Spider-Man",
-    genre: "Action",
-    rating: 4.7,
-    year: 2021,
-    duration: "2h 28m",
-    isPremium: false,
-    description: "With Spider-Man's identity now revealed, Peter asks Doctor Strange for help. When a spell goes wrong, dangerous foes from other worlds start to appear.",
-    banner: "https://images.unsplash.com/photo-1635805737707-575885ab0820?w=1920",
-  },
-];
+import { useAuth } from "../context/AuthContext";
+import { useWatchlist } from "../context/WatchlistContext";
+import { getAllMovies } from "../services/movieService";
 
 function Hero() {
   const [currentIndex, setCurrentIndex] = useState(0);
-
-  // 🎨 Get theme
+  const [movies, setMovies]             = useState([]);
+  const [loading, setLoading]           = useState(true);
   const { isDark } = useTheme();
+  const { user } = useAuth();
+  const { addToWatchlist, isInWatchlist } = useWatchlist();
+  const navigate = useNavigate();
 
+  // ✅ Fetch real movies from backend
   useEffect(() => {
+    const fetchMovies = async () => {
+      const data = await getAllMovies();
+      // Show first 4 movies in hero
+      setMovies(data.slice(0, 4));
+      setLoading(false);
+    };
+    fetchMovies();
+  }, []);
+
+  // ✅ Auto slide
+  useEffect(() => {
+    if (movies.length === 0) return;
     const timer = setInterval(() => {
       setCurrentIndex((prev) =>
-        prev === featuredMovies.length - 1 ? 0 : prev + 1
+        prev === movies.length - 1 ? 0 : prev + 1
       );
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [movies]);
 
-  const movie = featuredMovies[currentIndex];
+  if (loading || movies.length === 0) {
+    return (
+      <div style={{ width: "100%", height: "100vh", background: "#0f1117", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ color: "white", fontSize: "20px" }}>🎬 Loading...</p>
+      </div>
+    );
+  }
+
+  const movie = movies[currentIndex];
+  const inWatchlist = isInWatchlist(movie?._id);
+
+  // ✅ Handle Watch Now
+  const handleWatch = () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    navigate("/movie/" + movie._id + "?tab=watch");
+  };
+
+  // ✅ Handle Watchlist
+  const handleWatchlist = () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    if (inWatchlist) return;
+    addToWatchlist(movie);
+  };
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100vh", overflow: "hidden" }}>
 
       {/* ── Background Slides ── */}
-      {featuredMovies.map((m, index) => (
+      {movies.map((m, index) => (
         <div
-          key={m.id}
+          key={m._id}
           style={{
             position: "absolute",
             inset: 0,
@@ -131,15 +132,52 @@ function Hero() {
               {movie.description}
             </p>
 
-            {/* Buttons */}
+            {/* ✅ Buttons — now connected */}
             <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
-              <button style={{ background: "#dc2626", color: "white", padding: "14px 32px", borderRadius: "12px", fontWeight: 700, fontSize: "16px", border: "none", cursor: "pointer" }}>
-                 Watch Now
+              <button
+                onClick={handleWatch}
+                style={{ background: "#dc2626", color: "white", padding: "14px 32px", borderRadius: "12px", fontWeight: 700, fontSize: "16px", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+              >
+                ▶ {!user ? "Login to Watch" : "Watch Now"}
               </button>
-              <button style={{ background: "rgba(255,255,255,0.15)", color: "white", padding: "14px 24px", borderRadius: "12px", fontWeight: 700, fontSize: "16px", border: "1px solid rgba(255,255,255,0.3)", cursor: "pointer" }}>
-                + Watchlist
+              <button
+                onClick={handleWatchlist}
+                style={{
+                  background: inWatchlist ? "rgba(220,38,38,0.3)" : "rgba(255,255,255,0.15)",
+                  color: "white",
+                  padding: "14px 24px",
+                  borderRadius: "12px",
+                  fontWeight: 700,
+                  fontSize: "16px",
+                  border: inWatchlist ? "1px solid #dc2626" : "1px solid rgba(255,255,255,0.3)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                {inWatchlist ? "✓ Saved" : "+ Watchlist"}
+              </button>
+
+              {/* ✅ More Info button */}
+              <button
+                onClick={() => navigate("/movie/" + movie._id)}
+                style={{ background: "rgba(255,255,255,0.1)", color: "white", padding: "14px 24px", borderRadius: "12px", fontWeight: 600, fontSize: "16px", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer" }}
+              >
+                ℹ️ More Info
               </button>
             </div>
+
+            {/* Login hint */}
+            {!user && (
+              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "13px", marginTop: "12px" }}>
+                🔒 Please{" "}
+                <span onClick={() => navigate("/login")} style={{ color: "#dc2626", cursor: "pointer", fontWeight: 700, textDecoration: "underline" }}>
+                  login
+                </span>
+                {" "}to watch movies
+              </p>
+            )}
 
           </div>
         </div>
@@ -147,7 +185,7 @@ function Hero() {
 
       {/* ── Dot Indicators ── */}
       <div style={{ position: "absolute", bottom: "32px", left: "50%", transform: "translateX(-50%)", display: "flex", gap: "8px", zIndex: 10 }}>
-        {featuredMovies.map((_, index) => (
+        {movies.map((_, index) => (
           <button
             key={index}
             onClick={() => setCurrentIndex(index)}
@@ -166,7 +204,7 @@ function Hero() {
 
       {/* Left Arrow */}
       <button
-        onClick={() => setCurrentIndex((prev) => prev === 0 ? featuredMovies.length - 1 : prev - 1)}
+        onClick={() => setCurrentIndex((prev) => prev === 0 ? movies.length - 1 : prev - 1)}
         style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", zIndex: 10, background: "rgba(0,0,0,0.5)", color: "white", width: "44px", height: "44px", borderRadius: "50%", border: "none", cursor: "pointer", fontSize: "22px" }}
       >
         ‹
@@ -174,7 +212,7 @@ function Hero() {
 
       {/* Right Arrow */}
       <button
-        onClick={() => setCurrentIndex((prev) => prev === featuredMovies.length - 1 ? 0 : prev + 1)}
+        onClick={() => setCurrentIndex((prev) => prev === movies.length - 1 ? 0 : prev + 1)}
         style={{ position: "absolute", right: "16px", top: "50%", transform: "translateY(-50%)", zIndex: 10, background: "rgba(0,0,0,0.5)", color: "white", width: "44px", height: "44px", borderRadius: "50%", border: "none", cursor: "pointer", fontSize: "22px" }}
       >
         ›

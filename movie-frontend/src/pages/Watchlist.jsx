@@ -81,7 +81,7 @@ function Watchlist() {
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           {watchlist.map((movie) => (
             <div
-              key={movie.id}
+              key={movie._id}
               style={{
                 background: theme.bgCard,
                 border: "1px solid " + theme.border,
@@ -96,7 +96,7 @@ function Watchlist() {
               {/* Poster */}
               <div
                 style={{ width: "120px", minWidth: "120px", cursor: "pointer" }}
-                onClick={() => navigate("/movie/" + movie.id)}
+                onClick={() => navigate("/movie/" + movie._id)}
               >
                 <img
                   src={movie.image}
@@ -118,7 +118,7 @@ function Watchlist() {
 
                   {/* Title */}
                   <h3
-                    onClick={() => navigate("/movie/" + movie.id)}
+                    onClick={() => navigate("/movie/" + movie._id)}
                     style={{ color: theme.textMain, fontWeight: 800, fontSize: "18px", margin: "0 0 8px", cursor: "pointer" }}
                   >
                     {movie.title}
@@ -164,7 +164,7 @@ function Watchlist() {
 
                   {/* Trailer */}
                   <button
-                    onClick={() => navigate("/movie/" + movie.id + "?tab=trailer")}
+                    onClick={() => navigate("/movie/" + movie._id + "?tab=trailer")}
                     style={{
                       background: theme.bgInput, color: theme.textMain,
                       border: "1px solid " + theme.border,
@@ -179,7 +179,7 @@ function Watchlist() {
 
                   {/* Watch Now */}
                   <button
-                    onClick={() => navigate("/movie/" + movie.id + "?tab=watch")}
+                    onClick={() => navigate("/movie/" + movie._id + "?tab=watch")}
                     style={{
                       background: "#dc2626", color: "white",
                       border: "none", padding: "9px 16px",
@@ -194,7 +194,7 @@ function Watchlist() {
 
                   {/* Remove */}
                   <button
-                    onClick={() => removeFromWatchlist(movie.id)}
+                    onClick={() => removeFromWatchlist(movie._id)}
                     style={{
                       background: "transparent", color: "#ef4444",
                       border: "1px solid #ef4444",

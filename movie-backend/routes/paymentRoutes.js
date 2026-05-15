@@ -10,10 +10,14 @@ import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/init",    protect, initPayment);    // POST /api/payment/init
-router.get("/success",  paymentSuccess);           // GET  /api/payment/success
-router.post("/fail",    paymentFail);              // POST /api/payment/fail
-router.post("/cancel",  paymentCancel);            // POST /api/payment/cancel
-router.post("/ipn",     paymentIPN);               // POST /api/payment/ipn
+router.post("/init",    protect, initPayment);
+
+// ✅ Both GET and POST for success
+router.get("/success",  paymentSuccess);
+router.post("/success", paymentSuccess);
+
+router.post("/fail",    paymentFail);
+router.post("/cancel",  paymentCancel);
+router.post("/ipn",     paymentIPN);
 
 export default router;

@@ -16,14 +16,26 @@ function Hero() {
 
   // ✅ Fetch real movies from backend
   useEffect(() => {
-    const fetchMovies = async () => {
-      const data = await getAllMovies();
-      // Show first 4 movies in hero
-      setMovies(data.slice(0, 4));
-      setLoading(false);
-    };
-    fetchMovies();
-  }, []);
+  const fetchMovies = async () => {
+    const data = await getAllMovies();
+
+    // ✅ Pick these 4 specific movies for hero
+    const heroTitles = ["Avengers", "Interstellar", "Inception", "Spider-Man No Way Home"];
+    const heroMovies = heroTitles
+      .map(title => data.find(m => m.title === title))
+      .filter(Boolean); // remove any not found
+
+    // If less than 4 found fill with other movies
+    if (heroMovies.length < 4) {
+      const remaining = data.filter(m => !heroTitles.includes(m.title));
+      heroMovies.push(...remaining.slice(0, 4 - heroMovies.length));
+    }
+
+    setMovies(heroMovies);
+    setLoading(false);
+  };
+  fetchMovies();
+}, []);
 
   // ✅ Auto slide
   useEffect(() => {

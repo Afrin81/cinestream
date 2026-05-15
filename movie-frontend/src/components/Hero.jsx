@@ -15,17 +15,17 @@ function Hero() {
   const navigate = useNavigate();
 
   // ✅ Fetch real movies from backend
-  useEffect(() => {
+ useEffect(() => {
   const fetchMovies = async () => {
     const data = await getAllMovies();
 
-    // ✅ Pick these 4 specific movies for hero
+    // ✅ From Code 1 — Pick specific 4 movies
     const heroTitles = ["Avengers", "Interstellar", "Inception", "Spider-Man No Way Home"];
     const heroMovies = heroTitles
       .map(title => data.find(m => m.title === title))
-      .filter(Boolean); // remove any not found
+      .filter(Boolean);
 
-    // If less than 4 found fill with other movies
+    // Fill remaining if less than 4 found
     if (heroMovies.length < 4) {
       const remaining = data.filter(m => !heroTitles.includes(m.title));
       heroMovies.push(...remaining.slice(0, 4 - heroMovies.length));
@@ -36,7 +36,6 @@ function Hero() {
   };
   fetchMovies();
 }, []);
-
   // ✅ Auto slide
   useEffect(() => {
     if (movies.length === 0) return;

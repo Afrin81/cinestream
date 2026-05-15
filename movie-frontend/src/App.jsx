@@ -4,6 +4,7 @@ import { useTheme } from "./context/ThemeContext";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import Home from "./pages/Home";
+import Movies from "./pages/Movies";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import MovieDetail from "./pages/MovieDetail";
@@ -26,6 +27,7 @@ function App() {
         <div style={{ flex: 1 }}>
           <Routes>
             <Route path="/" element={<><Hero /><MoodPicker /><Home /></>} />
+            <Route path="/movies"           element={<Movies />} />
             <Route path="/login"            element={<Login />} />
             <Route path="/register"         element={<Register />} />
             <Route path="/movie/:id"        element={<MovieDetail />} />

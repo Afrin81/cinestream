@@ -9,11 +9,11 @@ import Register from "./pages/Register";
 import MovieDetail from "./pages/MovieDetail";
 import Watchlist from "./pages/Watchlist";
 import Payment from "./pages/Payment";
+import PaymentSuccess from "./pages/PaymentSuccess";
 import Admin from "./pages/Admin";
 import MoodPicker from "./components/MoodPicker";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
-import PaymentSuccess from "./pages/PaymentSuccess";
 
 function App() {
   const { theme } = useTheme();
@@ -26,13 +26,13 @@ function App() {
         <div style={{ flex: 1 }}>
           <Routes>
             <Route path="/" element={<><Hero /><MoodPicker /><Home /></>} />
-            <Route path="/login"     element={<Login />} />
-            <Route path="/register"  element={<Register />} />
-            <Route path="/movie/:id" element={<MovieDetail />} />
-            <Route path="/watchlist" element={<Watchlist />} />
-            <Route path="/payment"   element={<Payment />} />
-            <Route path="/admin"     element={<Admin />} />
-            <Route path="/payment/success" element={<PaymentSuccess />} />
+            <Route path="/login"            element={<Login />} />
+            <Route path="/register"         element={<Register />} />
+            <Route path="/movie/:id"        element={<MovieDetail />} />
+            <Route path="/watchlist"        element={<Watchlist />} />
+            <Route path="/payment"          element={<Payment />} />
+            <Route path="/payment/success"  element={<PaymentSuccess />} />
+            <Route path="/admin"            element={<Admin />} />
           </Routes>
         </div>
         <Footer />

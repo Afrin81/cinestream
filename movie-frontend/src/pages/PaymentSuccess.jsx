@@ -2,7 +2,6 @@ import React, { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
-import { getCurrentUser } from "../services/authService";
 
 function PaymentSuccess() {
   const { theme } = useTheme();
@@ -14,17 +13,16 @@ function PaymentSuccess() {
   const tranId = searchParams.get("tran_id");
 
   useEffect(() => {
-    // Refresh user data to get updated isPremium status
-    const user = getCurrentUser();
-    if (user) {
-      // Force refresh from backend
-      fetch(`https://cinestream-backend-ng16.onrender.com/api/auth/me`, {
-        headers: { Authorization: `Bearer ${user.token}` }
+    // ✅ Refresh user data to get updated isPremium
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    if (currentUser?.token) {
+      fetch("https://cinestream-backend-ng16.onrender.com/api/auth/me", {
+        headers: { Authorization: `Bearer ${currentUser.token}` }
       })
         .then(res => res.json())
         .then(data => {
           if (data.user) {
-            const updatedUser = { ...user, ...data.user };
+            const updatedUser = { ...currentUser, ...data.user };
             localStorage.setItem("currentUser", JSON.stringify(updatedUser));
             login(updatedUser);
           }
@@ -35,10 +33,15 @@ function PaymentSuccess() {
 
   return (
     <div style={{
-      minHeight: "100vh", background: theme.bg,
-      display: "flex", alignItems: "center",
-      justifyContent: "center", flexDirection: "column",
-      gap: "20px", padding: "24px", textAlign: "center",
+      minHeight: "100vh",
+      background: theme.bg,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      flexDirection: "column",
+      gap: "20px",
+      padding: "24px",
+      textAlign: "center",
     }}>
       <div style={{ fontSize: "72px" }}>🎉</div>
 
@@ -54,10 +57,10 @@ function PaymentSuccess() {
         background: theme.bgCard,
         border: "1px solid #22c55e",
         borderRadius: "16px",
-        padding: "20px 32px",
+        padding: "24px 32px",
         display: "flex",
         flexDirection: "column",
-        gap: "8px",
+        gap: "10px",
         minWidth: "300px",
       }}>
         <p style={{ color: theme.textSub, fontSize: "13px", margin: 0 }}>Plan Activated</p>
@@ -71,7 +74,16 @@ function PaymentSuccess() {
 
       <button
         onClick={() => navigate("/")}
-        style={{ background: "#dc2626", color: "white", border: "none", padding: "14px 40px", borderRadius: "12px", fontWeight: 700, fontSize: "16px", cursor: "pointer" }}
+        style={{
+          background: "#dc2626",
+          color: "white",
+          border: "none",
+          padding: "14px 40px",
+          borderRadius: "12px",
+          fontWeight: 700,
+          fontSize: "16px",
+          cursor: "pointer",
+        }}
       >
         Start Watching 🎬
       </button>

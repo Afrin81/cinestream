@@ -149,7 +149,7 @@ function Hero() {
                 onClick={handleWatch}
                 style={{ background: "#dc2626", color: "white", padding: "14px 32px", borderRadius: "12px", fontWeight: 700, fontSize: "16px", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
               >
-                ▶ {!user ? "Login to Watch" : "Watch Now"}
+                 {!user ? "Login to Watch" : "Watch Now"}
               </button>
               <button
                 onClick={handleWatchlist}
@@ -175,7 +175,7 @@ function Hero() {
                 onClick={() => navigate("/movie/" + movie._id)}
                 style={{ background: "rgba(255,255,255,0.1)", color: "white", padding: "14px 24px", borderRadius: "12px", fontWeight: 600, fontSize: "16px", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer" }}
               >
-                ℹ️ More Info
+                 More Info
               </button>
             </div>
 

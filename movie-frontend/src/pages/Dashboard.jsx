@@ -28,10 +28,14 @@ function Dashboard() {
   }, []);
 
   // ✅ Load recently watched from localStorage
-  useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("recentlyWatched") || "[]");
+ useEffect(() => {
+  if (user) {
+    // ✅ Use user-specific key
+    const key = `recentlyWatched_${user._id}`;
+    const saved = JSON.parse(localStorage.getItem(key) || "[]");
     setRecentlyWatched(saved);
-  }, []);
+  }
+}, [user]);
 
   // 🔒 Not logged in
   if (!user) {

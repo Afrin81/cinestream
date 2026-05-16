@@ -77,13 +77,21 @@ function MovieDetail() {
   };
 
   const handleWatch = () => {
-    if (!user) { navigate("/login"); return; }
-    if (movie.isPremium && !isPremium) { navigate("/payment"); return; }
-    // ✅ Save to recently watched
-    saveToRecentlyWatched(movie);
-    setShowMovie(true);
-    setShowTrailer(false);
-  };
+  if (!user) { navigate("/login"); return; }
+  if (movie.isPremium && !isPremium) { navigate("/payment"); return; }
+
+  // ✅ Save to user-specific watch history
+  const key = `recentlyWatched_${user._id}`;
+  const history = JSON.parse(localStorage.getItem(key) || "[]");
+  const exists = history.find(m => m._id === movie._id);
+  if (!exists) {
+    const updated = [movie, ...history].slice(0, 20); // keep last 20
+    localStorage.setItem(key, JSON.stringify(updated));
+  }
+
+  setShowMovie(true);
+  setShowTrailer(false);
+};
 
   const handleTrailer = () => {
     setShowTrailer(true);

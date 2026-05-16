@@ -4,7 +4,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { useWatchlist } from "../context/WatchlistContext";
 import { getAllMovies } from "../services/movieService";
-import { FaUser, FaCrown, FaFilm, FaHeart, FaStar, FaPlay } from "react-icons/fa";
+import { FaUser, FaCrown, FaFilm, FaHeart, FaStar, FaPlay, FaHistory } from "react-icons/fa";
 
 function Dashboard() {
   const { theme } = useTheme();
@@ -12,9 +12,10 @@ function Dashboard() {
   const { watchlist } = useWatchlist();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab]     = useState("overview");
-  const [allMovies, setAllMovies]     = useState([]);
-  const [loading, setLoading]         = useState(true);
+  const [activeTab, setActiveTab]             = useState("overview");
+  const [allMovies, setAllMovies]             = useState([]);
+  const [loading, setLoading]                 = useState(true);
+  const [recentlyWatched, setRecentlyWatched] = useState([]);
 
   // ✅ Fetch all movies
   useEffect(() => {
@@ -24,6 +25,12 @@ function Dashboard() {
       setLoading(false);
     };
     fetchMovies();
+  }, []);
+
+  // ✅ Load recently watched from localStorage
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem("recentlyWatched") || "[]");
+    setRecentlyWatched(saved);
   }, []);
 
   // 🔒 Not logged in
@@ -42,6 +49,7 @@ function Dashboard() {
   const tabs = [
     { id: "overview",  label: "Overview",  icon: <FaUser /> },
     { id: "watchlist", label: "Watchlist", icon: <FaHeart /> },
+    { id: "history",   label: "History",   icon: <FaHistory /> },
     { id: "movies",    label: "Movies",    icon: <FaFilm /> },
   ];
 
@@ -124,10 +132,10 @@ function Dashboard() {
         {/* ── Stats Cards ── */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "16px", marginBottom: "32px" }}>
           {[
-            { label: "Watchlist",   value: watchlist.length,  emoji: "🎬", color: "#3b82f6" },
+            { label: "Watchlist",   value: watchlist.length,        emoji: "🎬", color: "#3b82f6" },
+            { label: "Watched",     value: recentlyWatched.length,  emoji: "▶️", color: "#22c55e" },
             { label: "Plan",        value: isPremium ? "Premium" : "Free", emoji: isPremium ? "💎" : "🆓", color: isPremium ? "#eab308" : "#6b7280" },
-            { label: "Movies",      value: allMovies.length,  emoji: "🎥", color: "#22c55e" },
-            { label: "Status",      value: "Active",          emoji: "✅", color: "#10b981" },
+            { label: "Status",      value: "Active",                emoji: "✅", color: "#10b981" },
           ].map((stat) => (
             <div key={stat.label} style={{
               background: theme.bgCard,
@@ -193,6 +201,43 @@ function Dashboard() {
               </div>
             </div>
 
+            {/* ✅ Recently Watched */}
+            {recentlyWatched.length > 0 && (
+              <div style={{ background: theme.bgCard, border: "1px solid " + theme.border, borderRadius: "16px", padding: "24px", marginBottom: "24px" }}>
+                <h3 style={{ color: theme.textMain, fontWeight: 800, fontSize: "16px", margin: "0 0 20px", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <FaHistory style={{ color: "#dc2626" }} /> Recently Watched
+                </h3>
+                <div style={{ display: "flex", gap: "16px", overflowX: "auto", paddingBottom: "8px" }}>
+                  {recentlyWatched.slice(0, 6).map((movie) => (
+                    <div
+                      key={movie._id}
+                      onClick={() => navigate("/movie/" + movie._id)}
+                      style={{ minWidth: "140px", cursor: "pointer" }}
+                    >
+                      <div style={{ position: "relative" }}>
+                        <img
+                          src={movie.image}
+                          alt={movie.title}
+                          onError={(e) => { e.target.src = "https://placehold.co/140x200/1a1a2e/ffffff?text=" + encodeURIComponent(movie.title); }}
+                          style={{ width: "140px", height: "200px", objectFit: "cover", borderRadius: "10px", display: "block", marginBottom: "8px" }}
+                        />
+                        <div style={{ position: "absolute", inset: 0, borderRadius: "10px", background: "rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.2s" }}
+                          onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
+                          onMouseLeave={(e) => e.currentTarget.style.opacity = 0}
+                        >
+                          <FaPlay style={{ color: "white", fontSize: "24px" }} />
+                        </div>
+                      </div>
+                      <p style={{ color: theme.textMain, fontSize: "12px", fontWeight: 700, margin: "0 0 2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "140px" }}>
+                        {movie.title}
+                      </p>
+                      <p style={{ color: theme.textSub, fontSize: "11px", margin: 0 }}>⭐ {movie.rating}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Recommended Movies */}
             <div style={{ background: theme.bgCard, border: "1px solid " + theme.border, borderRadius: "16px", padding: "24px", marginBottom: "24px" }}>
               <h3 style={{ color: theme.textMain, fontWeight: 800, fontSize: "16px", margin: "0 0 20px", display: "flex", alignItems: "center", gap: "8px" }}>
@@ -233,6 +278,7 @@ function Dashboard() {
                 {[
                   { label: "Browse Movies",   icon: "🎬", action: () => navigate("/movies") },
                   { label: "My Watchlist",    icon: "❤️", action: () => setActiveTab("watchlist") },
+                  { label: "Watch History",   icon: "▶️", action: () => setActiveTab("history") },
                   { label: "Upgrade Plan",    icon: "💎", action: () => navigate("/payment"), hide: isPremium },
                 ].filter(a => !a.hide).map((action) => (
                   <button
@@ -298,7 +344,6 @@ function Dashboard() {
                     onMouseEnter={(e) => e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.2)"}
                     onMouseLeave={(e) => e.currentTarget.style.boxShadow = "none"}
                   >
-                    {/* Poster */}
                     <img
                       src={movie.image}
                       alt={movie.title}
@@ -306,8 +351,6 @@ function Dashboard() {
                       onError={(e) => { e.target.src = "https://placehold.co/80x110/1a1a2e/ffffff?text=M"; }}
                       style={{ width: "80px", height: "110px", objectFit: "cover", cursor: "pointer", flexShrink: 0 }}
                     />
-
-                    {/* Info */}
                     <div style={{ flex: 1, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
                       <div>
                         <h3
@@ -325,13 +368,83 @@ function Dashboard() {
                           )}
                         </div>
                       </div>
-
-                      {/* Watch button */}
                       <button
                         onClick={() => navigate("/movie/" + movie._id + "?tab=watch")}
                         style={{ background: "#dc2626", color: "white", border: "none", padding: "8px 16px", borderRadius: "8px", fontWeight: 700, fontSize: "13px", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}
                       >
                         <FaPlay /> Watch
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ══════════════════ */}
+        {/* HISTORY TAB       */}
+        {/* ══════════════════ */}
+        {activeTab === "history" && (
+          <div>
+            <h2 style={{ color: theme.textMain, fontSize: "20px", fontWeight: 800, margin: "0 0 20px" }}>
+              ▶️ Watch History ({recentlyWatched.length} movies)
+            </h2>
+
+            {recentlyWatched.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "60px 24px", background: theme.bgCard, borderRadius: "16px", border: "1px solid " + theme.border }}>
+                <p style={{ fontSize: "48px", margin: "0 0 16px" }}>▶️</p>
+                <p style={{ color: theme.textMain, fontSize: "18px", fontWeight: 700, margin: "0 0 8px" }}>No watch history yet</p>
+                <p style={{ color: theme.textSub, fontSize: "14px", margin: "0 0 20px" }}>Start watching movies!</p>
+                <button
+                  onClick={() => navigate("/movies")}
+                  style={{ background: "#dc2626", color: "white", border: "none", padding: "10px 24px", borderRadius: "10px", fontWeight: 700, cursor: "pointer" }}
+                >
+                  Browse Movies
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {recentlyWatched.map((movie) => (
+                  <div
+                    key={movie._id}
+                    style={{
+                      background: theme.bgCard,
+                      border: "1px solid " + theme.border,
+                      borderRadius: "14px",
+                      overflow: "hidden",
+                      display: "flex",
+                      transition: "box-shadow 0.2s",
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.2)"}
+                    onMouseLeave={(e) => e.currentTarget.style.boxShadow = "none"}
+                  >
+                    <img
+                      src={movie.image}
+                      alt={movie.title}
+                      onClick={() => navigate("/movie/" + movie._id)}
+                      onError={(e) => { e.target.src = "https://placehold.co/80x110/1a1a2e/ffffff?text=M"; }}
+                      style={{ width: "80px", height: "110px", objectFit: "cover", cursor: "pointer", flexShrink: 0 }}
+                    />
+                    <div style={{ flex: 1, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+                      <div>
+                        <h3
+                          onClick={() => navigate("/movie/" + movie._id)}
+                          style={{ color: theme.textMain, fontWeight: 700, fontSize: "16px", margin: "0 0 6px", cursor: "pointer" }}
+                        >
+                          {movie.title}
+                        </h3>
+                        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                          <span style={{ background: "#dc262622", color: "#dc2626", fontSize: "11px", padding: "2px 8px", borderRadius: "999px", fontWeight: 600 }}>{movie.genre}</span>
+                          <span style={{ color: theme.textSub, fontSize: "12px" }}>{movie.year}</span>
+                          <span style={{ color: "#facc15", fontSize: "12px", fontWeight: 700 }}>⭐ {movie.rating}</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => navigate("/movie/" + movie._id + "?tab=watch")}
+                        style={{ background: "#dc2626", color: "white", border: "none", padding: "8px 16px", borderRadius: "8px", fontWeight: 700, fontSize: "13px", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}
+                      >
+                        <FaPlay /> Watch Again
                       </button>
                     </div>
                   </div>

@@ -7,6 +7,15 @@ import { getMovieById, getSimilarMovies } from "../services/movieService";
 import { FaPlay, FaPlus, FaArrowLeft, FaStar, FaFilm, FaLock, FaCrown } from "react-icons/fa";
 import MovieCard from "../components/MovieCard";
 
+// ✅ Save to recently watched in localStorage
+const saveToRecentlyWatched = (movie) => {
+  const key = "recentlyWatched";
+  const existing = JSON.parse(localStorage.getItem(key) || "[]");
+  const filtered = existing.filter((m) => m._id !== movie._id);
+  const updated = [movie, ...filtered].slice(0, 10); // keep last 10
+  localStorage.setItem(key, JSON.stringify(updated));
+};
+
 function MovieDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -70,6 +79,8 @@ function MovieDetail() {
   const handleWatch = () => {
     if (!user) { navigate("/login"); return; }
     if (movie.isPremium && !isPremium) { navigate("/payment"); return; }
+    // ✅ Save to recently watched
+    saveToRecentlyWatched(movie);
     setShowMovie(true);
     setShowTrailer(false);
   };
@@ -96,9 +107,7 @@ function MovieDetail() {
   // ✅ Get clean YouTube embed URL
   const getEmbedUrl = (url) => {
     if (!url) return "";
-    // Remove everything after ? first
     const baseUrl = url.split("?")[0];
-    // Add autoplay params
     return baseUrl + "?autoplay=1&rel=0&modestbranding=1";
   };
 
@@ -301,7 +310,6 @@ function MovieDetail() {
               </p>
             </div>
 
-            {/* ✅ Always use iframe — works for all YouTube URLs */}
             <iframe
               key={showTrailer ? "trailer-frame" : "movie-frame"}
               src={getEmbedUrl(showTrailer ? movie.trailer : movie.videoUrl)}

@@ -159,7 +159,7 @@ function Navbar() {
                   onClick={() => navigate("/dashboard")}
                   style={{ color: theme.textMain, fontWeight: 600, fontSize: "14px", cursor: "pointer" }}
                 >
-                  👋 {user.name}
+                   {user.name}
                 </span>
                 {user.isAdmin && (
                   <Link to="/admin" style={{ textDecoration: "none", color: "#facc15", fontWeight: 700, fontSize: "14px" }}>

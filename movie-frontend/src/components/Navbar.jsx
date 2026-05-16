@@ -23,10 +23,11 @@ function Navbar() {
   };
 
   const navLinks = [
-    { name: "Home",      path: "/" },
-    { name: "Movies",    path: "/movies" },
-    { name: "Watchlist", path: "/watchlist" },
-  ];
+  { name: "Home",      path: "/" },
+  { name: "Movies",    path: "/movies" },
+  { name: "Watchlist", path: "/watchlist" },
+  { name: "Dashboard", path: "/dashboard" },
+];
 
   return (
     <>
@@ -154,8 +155,11 @@ function Navbar() {
             {/* Auth Buttons */}
             {user ? (
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }} className="hide-on-mobile">
-                <span style={{ color: theme.textMain, fontWeight: 600, fontSize: "14px" }}>
-                   {user.name}
+                <span
+                  onClick={() => navigate("/dashboard")}
+                  style={{ color: theme.textMain, fontWeight: 600, fontSize: "14px", cursor: "pointer" }}
+                >
+                  👋 {user.name}
                 </span>
                 {user.isAdmin && (
                   <Link to="/admin" style={{ textDecoration: "none", color: "#facc15", fontWeight: 700, fontSize: "14px" }}>

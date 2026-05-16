@@ -15,6 +15,7 @@ import Admin from "./pages/Admin";
 import MoodPicker from "./components/MoodPicker";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
+import Dashboard from "./pages/Dashboard";
 
 function App() {
   const { theme } = useTheme();
@@ -35,6 +36,7 @@ function App() {
             <Route path="/payment"          element={<Payment />} />
             <Route path="/payment/success"  element={<PaymentSuccess />} />
             <Route path="/admin"            element={<Admin />} />
+            <Route path="/dashboard" element={<Dashboard />} />
           </Routes>
         </div>
         <Footer />

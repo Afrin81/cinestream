@@ -1,0 +1,28 @@
+flowchart LR
+    %% Entities
+    Admin[Admin]
+
+    %% Sub-processes
+    P41((4.1 Manage Movies))
+    P42((4.2 Manage Users))
+    P43((4.3 View System Stats))
+
+    %% Data Stores
+    D1[(D1: Users DB)]
+    D2[(D2: Movies DB)]
+
+    %% 4.1 Manage Movies
+    Admin -->|Movie Details| P41
+    P41 <-->|Insert/Update/Delete Movie| D2
+    P41 -->|Movie Update Success| Admin
+
+    %% 4.2 Manage Users
+    Admin -->|Delete User Request| P42
+    P42 <-->|Remove User| D1
+    P42 -->|User Removal Confirmation| Admin
+
+    %% 4.3 View System Stats
+    Admin -->|Request Stats| P43
+    D1 -->|User Count| P43
+    D2 -->|Movie Count| P43
+    P43 -->|Dashboard Analytics| Admin

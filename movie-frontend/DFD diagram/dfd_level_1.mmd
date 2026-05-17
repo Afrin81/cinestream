@@ -1,0 +1,38 @@
+flowchart TD
+    %% External Entities
+    User[User]
+    Admin[Admin]
+    PG[Payment Gateway]
+
+    %% Processes
+    P1((1.0 User Authentication))
+    P2((2.0 Movie Browsing & Streaming))
+    P3((3.0 Payment Processing))
+    P4((4.0 Admin Management))
+
+    %% Data Stores
+    D1[(D1: Users DB)]
+    D2[(D2: Movies DB)]
+
+    %% 1.0 User Authentication
+    User -->|Credentials, Profile Data| P1
+    P1 -->|Auth Token, User Details| User
+    P1 <-->|Read/Write User Data| D1
+
+    %% 2.0 Movie Browsing & Streaming
+    User -->|Search Queries, Filter Requests| P2
+    P2 -->|Movie Details, Video Stream| User
+    P2 <-->|Read Movie Data| D2
+
+    %% 3.0 Payment Processing
+    User -->|Init Payment| P3
+    P3 -->|Payment Status| User
+    P3 -->|Transaction Info| PG
+    PG -->|Success/Fail Status| P3
+    P3 -->|Update Premium Status| D1
+
+    %% 4.0 Admin Management
+    Admin -->|Add/Edit/Delete Movies, Manage Users| P4
+    P4 -->|Admin Stats| Admin
+    P4 <-->|Modify Movies Data| D2
+    P4 <-->|Read/Delete User Data| D1

@@ -1,0 +1,20 @@
+flowchart TD
+    %% Entities
+    User[User]
+    Admin[Admin]
+    PG[Payment Gateway]
+
+    %% Main System
+    System((0.0 Movie Management System))
+
+    %% User Flows
+    User -->|Registration/Login Data, Search Queries, Payment Requests| System
+    System -->|Movie Content, Video Streams, Auth Tokens, Payment Confirmations| User
+
+    %% Admin Flows
+    Admin -->|Movie Updates, User Management Actions| System
+    System -->|System Statistics, User Reports| Admin
+
+    %% Payment Gateway Flows
+    System -->|Transaction Requests, Amount Details| PG
+    PG -->|Payment Status, IPN Notifications| System

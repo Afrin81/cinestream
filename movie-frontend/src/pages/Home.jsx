@@ -37,7 +37,7 @@ function Home() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px", marginBottom: "24px" }}>
           <div>
             <h2 style={{ fontSize: "28px", fontWeight: 800, margin: 0, color: theme.textMain }}>
-              🔥 Trending Now
+               Trending Now
             </h2>
             <p style={{ color: theme.textSub, fontSize: "14px", margin: "4px 0 0" }}>
               Most watched movies this week

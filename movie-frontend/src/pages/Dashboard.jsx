@@ -116,7 +116,7 @@ function Dashboard() {
               )}
               {user.isAdmin && (
                 <span style={{ background: "#7c3aed", color: "white", fontSize: "12px", padding: "4px 12px", borderRadius: "999px", fontWeight: 700 }}>
-                  👑 Admin
+                   Admin
                 </span>
               )}
             </div>
@@ -194,8 +194,8 @@ function Dashboard() {
                 {[
                   { label: "Full Name",     value: user.name },
                   { label: "Email",         value: user.email },
-                  { label: "Membership",    value: isPremium ? "💎 Premium" : "🆓 Free" },
-                  { label: "Account Type",  value: user.isAdmin ? "👑 Admin" : "👤 User" },
+                  { label: "Membership",    value: isPremium ? " Premium" : " Free" },
+                  { label: "Account Type",  value: user.isAdmin ? " Admin" : "👤 User" },
                 ].map((item) => (
                   <div key={item.label} style={{ background: theme.bgInput, borderRadius: "12px", padding: "16px" }}>
                     <p style={{ color: theme.textSub, fontSize: "12px", fontWeight: 600, margin: "0 0 6px", textTransform: "uppercase" }}>{item.label}</p>
@@ -276,7 +276,7 @@ function Dashboard() {
             {/* Quick Actions */}
             <div style={{ background: theme.bgCard, border: "1px solid " + theme.border, borderRadius: "16px", padding: "24px" }}>
               <h3 style={{ color: theme.textMain, fontWeight: 800, fontSize: "16px", margin: "0 0 20px" }}>
-                ⚡ Quick Actions
+                 Quick Actions
               </h3>
               <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
                 {[

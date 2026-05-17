@@ -44,7 +44,7 @@ function MoodPicker() {
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: "32px" }}>
           <h2 style={{ fontSize: "28px", fontWeight: 800, color: theme.textMain, margin: "0 0 8px" }}>
-            🎭 What's Your Mood?
+             What's Your Mood?
           </h2>
           <p style={{ color: theme.textSub, fontSize: "15px", margin: 0 }}>
             Pick how you're feeling and we'll recommend the perfect movie

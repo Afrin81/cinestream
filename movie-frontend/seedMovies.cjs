@@ -3,14 +3,14 @@ const axios = require("axios");
 const BASE_URL = "https://cinestream-backend-ng16.onrender.com";
 
 const fixedPosters = [
-  { title: "Pride and Prejudice", image: "https://img.posterstore.com/zoom/wb0089-8prideanprejudice50x70.jpg" },
-  { title: "The Matrix", image: "https://upload.wikimedia.org/wikipedia/en/c/c1/The_Matrix_Poster.jpg" },
-  { title: "Get Out", image: "https://flxt.tmsimg.com/assets/p13236522_p_v8_ab.jpg" },
-  { title: "Superbad", image: "https://flxt.tmsimg.com/assets/p161457_p_v8_ac.jpg" },
-  { title: "The Shawshank Redemption", image: "https://flxt.tmsimg.com/assets/p15987_p_v8_ab.jpg" },
-  { title: "Mission Impossible", image: "https://flxt.tmsimg.com/assets/p17770_p_v8_ab.jpg" },
-  { title: "The Mask", image: "https://flxt.tmsimg.com/assets/p15829_p_v8_af.jpg" },
-  { title: "Avengers", image: "https://flxt.tmsimg.com/assets/p9218194_p_v8_ac.jpg" },
+  { title: "Pride and Prejudice", image: "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/5k4yppzN8NkDt01TfGDpgkVDdOo.jpg" },
+  { title: "The Matrix", image: "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg" },
+  { title: "Get Out", image: "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/tFXcEccSUFedh6WmSPvKaR410vx.jpg" },
+  { title: "Superbad", image: "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/ek8e8txUyUwd2BNqj6lFEerJfbq.jpg" },
+  { title: "The Shawshank Redemption", image: "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg" },
+  { title: "Mission Impossible", image: "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/3OnaECDmSPDQNP8n1fDMTEyNhZr.jpg" },
+  { title: "The Mask", image: "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/pubpHOh8pHGRzOJVFE8JxOBKNBR.jpg" },
+  { title: "Avengers", image: "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/RYMX2wcKCBAr24UyPD7KE5FNJbV.jpg" },
 ];
 
 const newMovie = {

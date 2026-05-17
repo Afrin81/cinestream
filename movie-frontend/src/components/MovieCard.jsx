@@ -80,27 +80,6 @@ function MovieCard({ movie }) {
           background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 60%)",
         }} />
 
-        {/* Play icon on hover */}
-        {isHovered && (
-          <div style={{
-            position: "absolute", inset: 0,
-            display: "flex", alignItems: "center",
-            justifyContent: "center",
-          }}>
-            <div style={{
-              width: "44px", height: "44px",
-              borderRadius: "50%",
-              background: "rgba(220,38,38,0.9)",
-              display: "flex", alignItems: "center",
-              justifyContent: "center",
-              fontSize: "18px", color: "white",
-              boxShadow: "0 4px 16px rgba(0,0,0,0.5)",
-            }}>
-              ▶
-            </div>
-          </div>
-        )}
-
         {/* Premium badge */}
         {movie.isPremium && (
           <div style={{

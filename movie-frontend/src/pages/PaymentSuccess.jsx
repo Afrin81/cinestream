@@ -18,7 +18,6 @@ function PaymentSuccess() {
   });
 
   useEffect(() => {
-    // ✅ Refresh user data to get updated isPremium
     const currentUser = JSON.parse(localStorage.getItem("currentUser"));
     if (currentUser?.token) {
       fetch("https://cinestream-backend-ng16.onrender.com/api/auth/me", {
@@ -36,7 +35,7 @@ function PaymentSuccess() {
     }
   }, []);
 
-  // ✅ Download Invoice as HTML (prints as PDF)
+  // ✅ Auto download invoice
   const handleDownloadInvoice = () => {
     const invoiceHTML = `
       <!DOCTYPE html>
@@ -115,13 +114,16 @@ function PaymentSuccess() {
       </html>
     `;
 
+    // ✅ Auto download
     const blob = new Blob([invoiceHTML], { type: "text/html" });
     const url = URL.createObjectURL(blob);
-    const printWindow = window.open(url, "_blank");
-    printWindow.onload = () => {
-      printWindow.print();
-      URL.revokeObjectURL(url);
-    };
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `CineStream_Invoice_${tranId}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -185,8 +187,8 @@ function PaymentSuccess() {
           gap: "8px",
           transition: "all 0.2s",
         }}
-        onMouseEnter={(e) => { e.target.style.background = "#22c55e"; e.target.style.color = "white"; }}
-        onMouseLeave={(e) => { e.target.style.background = "transparent"; e.target.style.color = "#22c55e"; }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = "#22c55e"; e.currentTarget.style.color = "white"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#22c55e"; }}
       >
         🧾 Download Invoice
       </button>

@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
+import { useSearchParams } from "react-router-dom";
 import { getAllMovies } from "../services/movieService";
 import MovieCard from "../components/MovieCard";
 
-const genres = ["All", "Action", "Comedy", "Sci-Fi", "Drama", "Horror"];
+const genres = ["All", "Action", "Comedy", "Sci-Fi", "Drama", "Horror", "Romance", "Thriller"];
 
 function Movies() {
   const { theme } = useTheme();
-  const [allMovies, setAllMovies]         = useState([]);
+  const [searchParams] = useSearchParams();
+  const [allMovies, setAllMovies]           = useState([]);
   const [filteredMovies, setFilteredMovies] = useState([]);
-  const [selectedGenre, setSelectedGenre] = useState("All");
-  const [search, setSearch]               = useState("");
-  const [loading, setLoading]             = useState(true);
+  const [selectedGenre, setSelectedGenre]   = useState("All");
+  const [search, setSearch]                 = useState("");
+  const [loading, setLoading]               = useState(true);
 
   useEffect(() => {
     const fetchMovies = async () => {
@@ -23,6 +25,14 @@ function Movies() {
     };
     fetchMovies();
   }, []);
+
+  // ✅ Read genre from URL when page loads
+  useEffect(() => {
+    const genreFromUrl = searchParams.get("genre");
+    if (genreFromUrl) {
+      setSelectedGenre(genreFromUrl);
+    }
+  }, [searchParams]);
 
   // ── Filter movies ──
   useEffect(() => {
@@ -81,7 +91,7 @@ function Movies() {
           {/* Search */}
           <input
             type="text"
-            placeholder="🔍 Search movies..."
+            placeholder=" Search movies..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{
@@ -100,6 +110,9 @@ function Movies() {
         {/* Movie count */}
         <p style={{ color: theme.textSub, fontSize: "14px", marginBottom: "24px" }}>
           Showing {filteredMovies.length} movies
+          {selectedGenre !== "All" && (
+            <span style={{ color: "#dc2626", fontWeight: 700 }}> in {selectedGenre}</span>
+          )}
         </p>
 
         {/* Loading */}
@@ -111,9 +124,14 @@ function Movies() {
           <div style={{ textAlign: "center", paddingTop: "80px" }}>
             <p style={{ fontSize: "48px" }}>😕</p>
             <p style={{ color: theme.textSub, fontSize: "18px" }}>No movies found</p>
+            <button
+              onClick={() => setSelectedGenre("All")}
+              style={{ background: "#dc2626", color: "white", border: "none", padding: "10px 24px", borderRadius: "10px", fontWeight: 700, cursor: "pointer", marginTop: "16px" }}
+            >
+              Show All Movies
+            </button>
           </div>
         ) : (
-          /* ✅ Grid layout for movies page */
           <div style={{
             display: "flex",
             flexWrap: "wrap",

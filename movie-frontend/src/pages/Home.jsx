@@ -45,7 +45,7 @@ function Home() {
           </div>
           <input
             type="text"
-            placeholder="🔍 Search movies..."
+            placeholder=" Search movies..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{

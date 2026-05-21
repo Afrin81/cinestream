@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import { sendWelcomeEmail } from "../utils/sendEmail.js";
 
 // 🔑 Generate JWT Token
 const generateToken = (id) => {
@@ -33,6 +34,9 @@ export const registerUser = async (req, res) => {
     });
 
     if (user) {
+      // ✅ Send welcome email
+      sendWelcomeEmail(user.name, user.email);
+
       res.status(201).json({
         success: true,
         user: {

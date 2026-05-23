@@ -1,7 +1,9 @@
 import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -58,7 +60,7 @@ export const sendWelcomeEmail = async (name, email) => {
                 Start Watching Now 🎬
               </a>
               <p class="text" style="font-size: 13px;">
-                If you have any questions, feel free to contact us at 
+                If you have any questions, feel free to contact us at
                 <a href="mailto:support@cinestream.com" style="color: #dc2626;">support@cinestream.com</a>
               </p>
             </div>

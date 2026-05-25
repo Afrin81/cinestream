@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
@@ -7,31 +7,14 @@ import { getMovieById, getSimilarMovies } from "../services/movieService";
 import { FaPlay, FaPlus, FaArrowLeft, FaStar, FaFilm, FaLock, FaCrown } from "react-icons/fa";
 import MovieCard from "../components/MovieCard";
 
+// ✅ Save to recently watched in localStorage
 const saveToRecentlyWatched = (movie) => {
   const key = "recentlyWatched";
   const existing = JSON.parse(localStorage.getItem(key) || "[]");
   const filtered = existing.filter((m) => m._id !== movie._id);
-  const updated = [movie, ...filtered].slice(0, 10);
+  const updated = [movie, ...filtered].slice(0, 10); // keep last 10
   localStorage.setItem(key, JSON.stringify(updated));
 };
-
-const saveResumePosition = (movieId, time) => {
-  const key = `resume_${movieId}`;
-  localStorage.setItem(key, time.toString());
-};
-
-const getResumePosition = (movieId) => {
-  const key = `resume_${movieId}`;
-  return parseFloat(localStorage.getItem(key) || "0");
-};
-
-const formatTime = (seconds) => {
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, "0")}`;
-};
-
-const isGoogleDrive = (url) => url && url.includes("drive.google.com");
 
 function MovieDetail() {
   const { id } = useParams();
@@ -41,17 +24,14 @@ function MovieDetail() {
   const { user, isPremium } = useAuth();
   const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
 
-  const [userRating, setUserRating]         = useState(0);
-  const [hoveredStar, setHoveredStar]       = useState(0);
-  const [rated, setRated]                   = useState(false);
-  const [showTrailer, setShowTrailer]       = useState(false);
-  const [showMovie, setShowMovie]           = useState(false);
-  const [movie, setMovie]                   = useState(null);
-  const [similarMovies, setSimilarMovies]   = useState([]);
-  const [loading, setLoading]               = useState(true);
-  const [resumePosition, setResumePosition] = useState(0);
-  const [showResumePrompt, setShowResumePrompt] = useState(false);
-  const saveIntervalRef = useRef(null);
+  const [userRating, setUserRating]       = useState(0);
+  const [hoveredStar, setHoveredStar]     = useState(0);
+  const [rated, setRated]                 = useState(false);
+  const [showTrailer, setShowTrailer]     = useState(false);
+  const [showMovie, setShowMovie]         = useState(false);
+  const [movie, setMovie]                 = useState(null);
+  const [similarMovies, setSimilarMovies] = useState([]);
+  const [loading, setLoading]             = useState(true);
 
   useEffect(() => {
     const fetchMovie = async () => {
@@ -61,11 +41,6 @@ function MovieDetail() {
       if (data) {
         const similar = await getSimilarMovies(id);
         setSimilarMovies(similar);
-        const savedTime = getResumePosition(id);
-        if (savedTime > 10) {
-          setResumePosition(savedTime);
-          setShowResumePrompt(true);
-        }
       }
       setLoading(false);
       if (searchParams.get("tab") === "trailer") setShowTrailer(true);
@@ -73,20 +48,6 @@ function MovieDetail() {
     };
     fetchMovie();
   }, [id]);
-
-  // ✅ Save resume position every 5 seconds for Google Drive
-  useEffect(() => {
-    if (showMovie && isGoogleDrive(movie?.videoUrl)) {
-      let elapsed = resumePosition;
-      saveIntervalRef.current = setInterval(() => {
-        elapsed += 5;
-        saveResumePosition(id, elapsed);
-      }, 5000);
-    }
-    return () => {
-      if (saveIntervalRef.current) clearInterval(saveIntervalRef.current);
-    };
-  }, [showMovie]);
 
   const inWatchlist = isInWatchlist(movie?._id);
 
@@ -116,19 +77,21 @@ function MovieDetail() {
   };
 
   const handleWatch = () => {
-    if (!user) { navigate("/login"); return; }
-    if (movie.isPremium && !isPremium) { navigate("/payment"); return; }
-    const key = `recentlyWatched_${user._id}`;
-    const history = JSON.parse(localStorage.getItem(key) || "[]");
-    const exists = history.find(m => m._id === movie._id);
-    if (!exists) {
-      const updated = [movie, ...history].slice(0, 20);
-      localStorage.setItem(key, JSON.stringify(updated));
-    }
-    saveToRecentlyWatched(movie);
-    setShowMovie(true);
-    setShowTrailer(false);
-  };
+  if (!user) { navigate("/login"); return; }
+  if (movie.isPremium && !isPremium) { navigate("/payment"); return; }
+
+  // ✅ Save to user-specific watch history
+  const key = `recentlyWatched_${user._id}`;
+  const history = JSON.parse(localStorage.getItem(key) || "[]");
+  const exists = history.find(m => m._id === movie._id);
+  if (!exists) {
+    const updated = [movie, ...history].slice(0, 20); // keep last 20
+    localStorage.setItem(key, JSON.stringify(updated));
+  }
+
+  setShowMovie(true);
+  setShowTrailer(false);
+};
 
   const handleTrailer = () => {
     setShowTrailer(true);
@@ -145,11 +108,11 @@ function MovieDetail() {
   };
 
   const closeModal = () => {
-    if (saveIntervalRef.current) clearInterval(saveIntervalRef.current);
     setShowTrailer(false);
     setShowMovie(false);
   };
 
+  // ✅ Get clean YouTube embed URL
   const getEmbedUrl = (url) => {
     if (!url) return "";
     const baseUrl = url.split("?")[0];
@@ -159,7 +122,7 @@ function MovieDetail() {
   const getWatchButtonText = () => {
     if (!user) return "Login to Watch";
     if (movie.isPremium && !isPremium) return "Upgrade to Watch";
-    return resumePosition > 10 ? `▶ Continue from ${formatTime(resumePosition)}` : "Watch Now";
+    return "Watch Now";
   };
 
   const getWatchButtonBg = () => {
@@ -230,29 +193,6 @@ function MovieDetail() {
               <p style={{ color: "rgba(255,255,255,0.85)", fontSize: "15px", lineHeight: 1.8, marginBottom: "28px", maxWidth: "550px" }}>
                 {movie.description}
               </p>
-
-              {/* ✅ Resume Prompt */}
-              {showResumePrompt && isGoogleDrive(movie.videoUrl) && (
-                <div style={{ background: "rgba(220,38,38,0.2)", border: "1px solid #dc2626", borderRadius: "12px", padding: "12px 16px", marginBottom: "16px", display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-                  <p style={{ color: "white", fontSize: "14px", margin: 0 }}>
-                    ▶ Continue from <strong>{formatTime(resumePosition)}</strong>?
-                  </p>
-                  <div style={{ display: "flex", gap: "8px" }}>
-                    <button
-                      onClick={() => { setShowResumePrompt(false); handleWatch(); }}
-                      style={{ background: "#dc2626", color: "white", border: "none", padding: "6px 14px", borderRadius: "8px", fontWeight: 700, fontSize: "13px", cursor: "pointer" }}
-                    >
-                      Continue
-                    </button>
-                    <button
-                      onClick={() => { setResumePosition(0); setShowResumePrompt(false); saveResumePosition(id, 0); }}
-                      style={{ background: "rgba(255,255,255,0.1)", color: "white", border: "1px solid rgba(255,255,255,0.3)", padding: "6px 14px", borderRadius: "8px", fontWeight: 600, fontSize: "13px", cursor: "pointer" }}
-                    >
-                      Start Over
-                    </button>
-                  </div>
-                </div>
-              )}
 
               <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
                 <button
@@ -378,13 +318,9 @@ function MovieDetail() {
               </p>
             </div>
 
-            {/* ✅ Google Drive = iframe, YouTube = iframe */}
             <iframe
               key={showTrailer ? "trailer-frame" : "movie-frame"}
-              src={showMovie && isGoogleDrive(movie.videoUrl)
-                ? movie.videoUrl
-                : getEmbedUrl(showTrailer ? movie.trailer : movie.videoUrl)
-              }
+              src={getEmbedUrl(showTrailer ? movie.trailer : movie.videoUrl)}
               title={showTrailer ? movie.title + " Trailer" : movie.title + " Full Movie"}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen

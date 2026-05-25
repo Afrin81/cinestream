@@ -15,26 +15,22 @@ const saveToRecentlyWatched = (movie) => {
   localStorage.setItem(key, JSON.stringify(updated));
 };
 
-// ✅ Save resume position
 const saveResumePosition = (movieId, time) => {
   const key = `resume_${movieId}`;
   localStorage.setItem(key, time.toString());
 };
 
-// ✅ Get resume position
 const getResumePosition = (movieId) => {
   const key = `resume_${movieId}`;
   return parseFloat(localStorage.getItem(key) || "0");
 };
 
-// ✅ Format seconds to mm:ss
 const formatTime = (seconds) => {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `${m}:${s.toString().padStart(2, "0")}`;
 };
 
-// ✅ Check if URL is Google Drive
 const isGoogleDrive = (url) => url && url.includes("drive.google.com");
 
 function MovieDetail() {
@@ -45,17 +41,16 @@ function MovieDetail() {
   const { user, isPremium } = useAuth();
   const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
 
-  const [userRating, setUserRating]       = useState(0);
-  const [hoveredStar, setHoveredStar]     = useState(0);
-  const [rated, setRated]                 = useState(false);
-  const [showTrailer, setShowTrailer]     = useState(false);
-  const [showMovie, setShowMovie]         = useState(false);
-  const [movie, setMovie]                 = useState(null);
-  const [similarMovies, setSimilarMovies] = useState([]);
-  const [loading, setLoading]             = useState(true);
+  const [userRating, setUserRating]         = useState(0);
+  const [hoveredStar, setHoveredStar]       = useState(0);
+  const [rated, setRated]                   = useState(false);
+  const [showTrailer, setShowTrailer]       = useState(false);
+  const [showMovie, setShowMovie]           = useState(false);
+  const [movie, setMovie]                   = useState(null);
+  const [similarMovies, setSimilarMovies]   = useState([]);
+  const [loading, setLoading]               = useState(true);
   const [resumePosition, setResumePosition] = useState(0);
   const [showResumePrompt, setShowResumePrompt] = useState(false);
-  const videoRef = useRef(null);
   const saveIntervalRef = useRef(null);
 
   useEffect(() => {
@@ -66,7 +61,6 @@ function MovieDetail() {
       if (data) {
         const similar = await getSimilarMovies(id);
         setSimilarMovies(similar);
-        // ✅ Check if resume position exists
         const savedTime = getResumePosition(id);
         if (savedTime > 10) {
           setResumePosition(savedTime);
@@ -80,13 +74,13 @@ function MovieDetail() {
     fetchMovie();
   }, [id]);
 
-  // ✅ Save position every 5 seconds for Google Drive videos
+  // ✅ Save resume position every 5 seconds for Google Drive
   useEffect(() => {
-    if (showMovie && videoRef.current && isGoogleDrive(movie?.videoUrl)) {
+    if (showMovie && isGoogleDrive(movie?.videoUrl)) {
+      let elapsed = resumePosition;
       saveIntervalRef.current = setInterval(() => {
-        if (videoRef.current && !videoRef.current.paused) {
-          saveResumePosition(id, videoRef.current.currentTime);
-        }
+        elapsed += 5;
+        saveResumePosition(id, elapsed);
       }, 5000);
     }
     return () => {
@@ -151,20 +145,9 @@ function MovieDetail() {
   };
 
   const closeModal = () => {
-    // ✅ Save position when closing
-    if (videoRef.current && isGoogleDrive(movie?.videoUrl)) {
-      saveResumePosition(id, videoRef.current.currentTime);
-    }
     if (saveIntervalRef.current) clearInterval(saveIntervalRef.current);
     setShowTrailer(false);
     setShowMovie(false);
-  };
-
-  // ✅ Handle video loaded — jump to resume position
-  const handleVideoLoaded = () => {
-    if (videoRef.current && resumePosition > 10) {
-      videoRef.current.currentTime = resumePosition;
-    }
   };
 
   const getEmbedUrl = (url) => {
@@ -395,46 +378,25 @@ function MovieDetail() {
               </p>
             </div>
 
-            {/* ✅ Google Drive = HTML5 video with resume, YouTube = iframe */}
-            {showMovie && isGoogleDrive(movie.videoUrl) ? (
-              <video
-                ref={videoRef}
-                src={movie.videoUrl.replace("/preview", "/preview")}
-                controls
-                autoPlay
-                onLoadedMetadata={handleVideoLoaded}
-                onTimeUpdate={() => {
-                  if (videoRef.current) {
-                    saveResumePosition(id, videoRef.current.currentTime);
-                  }
-                }}
-                style={{
-                  width: "100%",
-                  height: "520px",
-                  borderRadius: "16px",
-                  border: "none",
-                  boxShadow: "0 0 80px rgba(220,38,38,0.3)",
-                  display: "block",
-                  background: "black",
-                }}
-              />
-            ) : (
-              <iframe
-                key={showTrailer ? "trailer-frame" : "movie-frame"}
-                src={getEmbedUrl(showTrailer ? movie.trailer : movie.videoUrl)}
-                title={showTrailer ? movie.title + " Trailer" : movie.title + " Full Movie"}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                style={{
-                  width: "100%",
-                  height: "520px",
-                  borderRadius: "16px",
-                  border: "none",
-                  boxShadow: "0 0 80px rgba(220,38,38,0.3)",
-                  display: "block",
-                }}
-              />
-            )}
+            {/* ✅ Google Drive = iframe, YouTube = iframe */}
+            <iframe
+              key={showTrailer ? "trailer-frame" : "movie-frame"}
+              src={showMovie && isGoogleDrive(movie.videoUrl)
+                ? movie.videoUrl
+                : getEmbedUrl(showTrailer ? movie.trailer : movie.videoUrl)
+              }
+              title={showTrailer ? movie.title + " Trailer" : movie.title + " Full Movie"}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              style={{
+                width: "100%",
+                height: "520px",
+                borderRadius: "16px",
+                border: "none",
+                boxShadow: "0 0 80px rgba(220,38,38,0.3)",
+                display: "block",
+              }}
+            />
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px" }}>
               <p style={{ color: "#6b7280", fontSize: "12px", margin: 0 }}>

@@ -3,18 +3,9 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { useWatchlist } from "../context/WatchlistContext";
-import { getMovieById, getSimilarMovies } from "../services/movieService";
+import { getMovieById, getSimilarMovies, saveWatchHistory } from "../services/movieService";
 import { FaPlay, FaPlus, FaArrowLeft, FaStar, FaFilm, FaLock, FaCrown } from "react-icons/fa";
 import MovieCard from "../components/MovieCard";
-
-// ✅ Save to recently watched in localStorage
-const saveToRecentlyWatched = (movie) => {
-  const key = "recentlyWatched";
-  const existing = JSON.parse(localStorage.getItem(key) || "[]");
-  const filtered = existing.filter((m) => m._id !== movie._id);
-  const updated = [movie, ...filtered].slice(0, 10); // keep last 10
-  localStorage.setItem(key, JSON.stringify(updated));
-};
 
 function MovieDetail() {
   const { id } = useParams();
@@ -77,21 +68,24 @@ function MovieDetail() {
   };
 
   const handleWatch = () => {
-  if (!user) { navigate("/login"); return; }
-  if (movie.isPremium && !isPremium) { navigate("/payment"); return; }
+    if (!user) { navigate("/login"); return; }
+    if (movie.isPremium && !isPremium) { navigate("/payment"); return; }
 
-  // ✅ Save to user-specific watch history
-  const key = `recentlyWatched_${user._id}`;
-  const history = JSON.parse(localStorage.getItem(key) || "[]");
-  const exists = history.find(m => m._id === movie._id);
-  if (!exists) {
-    const updated = [movie, ...history].slice(0, 20); // keep last 20
-    localStorage.setItem(key, JSON.stringify(updated));
-  }
+    // ✅ Save to backend for most watched feature
+    saveWatchHistory(movie._id);
 
-  setShowMovie(true);
-  setShowTrailer(false);
-};
+    // ✅ Save to localStorage for dashboard history
+    const historyKey = `recentlyWatched_${user._id}`;
+    const history = JSON.parse(localStorage.getItem(historyKey) || "[]");
+    const exists = history.find(m => m._id === movie._id);
+    if (!exists) {
+      const updated = [movie, ...history].slice(0, 20);
+      localStorage.setItem(historyKey, JSON.stringify(updated));
+    }
+
+    setShowMovie(true);
+    setShowTrailer(false);
+  };
 
   const handleTrailer = () => {
     setShowTrailer(true);
@@ -112,7 +106,6 @@ function MovieDetail() {
     setShowMovie(false);
   };
 
-  // ✅ Get clean YouTube embed URL
   const getEmbedUrl = (url) => {
     if (!url) return "";
     const baseUrl = url.split("?")[0];
@@ -324,14 +317,7 @@ function MovieDetail() {
               title={showTrailer ? movie.title + " Trailer" : movie.title + " Full Movie"}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
-              style={{
-                width: "100%",
-                height: "520px",
-                borderRadius: "16px",
-                border: "none",
-                boxShadow: "0 0 80px rgba(220,38,38,0.3)",
-                display: "block",
-              }}
+              style={{ width: "100%", height: "520px", borderRadius: "16px", border: "none", boxShadow: "0 0 80px rgba(220,38,38,0.3)", display: "block" }}
             />
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px" }}>

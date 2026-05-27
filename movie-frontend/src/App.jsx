@@ -13,6 +13,7 @@ import Payment from "./pages/Payment";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import Admin from "./pages/Admin";
 import MoodPicker from "./components/MoodPicker";
+import MostWatched from "./components/MostWatched";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
 import Dashboard from "./pages/Dashboard";
@@ -27,7 +28,14 @@ function App() {
         <Navbar />
         <div style={{ flex: 1 }}>
           <Routes>
-            <Route path="/" element={<><Hero /><MoodPicker /><Home /></>} />
+            <Route path="/" element={
+              <>
+                <Hero />
+                <MostWatched />
+                <MoodPicker />
+                <Home />
+              </>
+            } />
             <Route path="/movies"           element={<Movies />} />
             <Route path="/login"            element={<Login />} />
             <Route path="/register"         element={<Register />} />
@@ -36,7 +44,7 @@ function App() {
             <Route path="/payment"          element={<Payment />} />
             <Route path="/payment/success"  element={<PaymentSuccess />} />
             <Route path="/admin"            element={<Admin />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard"        element={<Dashboard />} />
           </Routes>
         </div>
         <Footer />

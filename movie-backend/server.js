@@ -6,8 +6,7 @@ import authRoutes from "./routes/authRoutes.js";
 import movieRoutes from "./routes/movieRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
-
-// ✅ Remove dotenv import — Render injects env vars directly
+import watchHistoryRoutes from "./routes/watchHistoryRoutes.js";
 
 connectDB();
 
@@ -32,6 +31,7 @@ app.use("/api/auth",    authRoutes);
 app.use("/api/movies",  movieRoutes);
 app.use("/api/admin",   adminRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/watch",   watchHistoryRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

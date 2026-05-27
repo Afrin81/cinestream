@@ -1,7 +1,6 @@
 import API from "./api.js";
 
 // ✅ Get all movies
-// Later connects to: GET /api/movies
 export const getAllMovies = async (filters = {}) => {
   try {
     const response = await API.get("/movies", { params: filters });
@@ -13,7 +12,6 @@ export const getAllMovies = async (filters = {}) => {
 };
 
 // ✅ Get movie by id
-// Later connects to: GET /api/movies/:id
 export const getMovieById = async (id) => {
   try {
     const response = await API.get(`/movies/${id}`);
@@ -25,7 +23,6 @@ export const getMovieById = async (id) => {
 };
 
 // ✅ Get similar movies
-// Later connects to: GET /api/movies/:id/similar
 export const getSimilarMovies = async (id) => {
   try {
     const response = await API.get(`/movies/${id}/similar`);
@@ -55,5 +52,27 @@ export const rateMovie = async (id, rating) => {
   } catch (error) {
     console.error("Error rating movie:", error);
     return null;
+  }
+};
+
+// ✅ Save watch history to backend
+export const saveWatchHistory = async (movieId) => {
+  try {
+    const response = await API.post("/watch/save", { movieId });
+    return response.data;
+  } catch (error) {
+    console.error("Error saving watch history:", error);
+    return null;
+  }
+};
+
+// ✅ Get most watched movies
+export const getMostWatched = async (days = 7) => {
+  try {
+    const response = await API.get(`/watch/most-watched?days=${days}`);
+    return response.data.movies;
+  } catch (error) {
+    console.error("Error fetching most watched:", error);
+    return [];
   }
 };

@@ -30,7 +30,7 @@ function MostWatched() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", flexWrap: "wrap", gap: "16px" }}>
           <div>
             <h2 style={{ fontSize: "24px", fontWeight: 800, color: theme.textMain, margin: "0 0 4px" }}>
-              🔥 Most Watched
+               Most Watched
             </h2>
             <p style={{ color: theme.textSub, fontSize: "14px", margin: 0 }}>
               Top movies in the last {days} days

@@ -8,17 +8,11 @@ import {
 } from "../services/adminService";
 import { getAllMovies, getMostWatched } from "../services/movieService";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell, LineChart,
-  Line, Legend,
-} from "recharts";
-import {
   FaFilm, FaUsers, FaChartBar, FaPlus, FaEdit, FaTrash,
   FaStar, FaFire, FaCheckCircle, FaTimesCircle, FaSearch,
-  FaCrown, FaMoneyBillWave, FaEye,
+  FaCrown, FaMoneyBillWave, FaUserPlus,
 } from "react-icons/fa";
 
-// ✅ Revenue calculation helpers
 const MONTHLY_PRICE = 199;
 const YEARLY_PRICE  = 1499;
 
@@ -31,6 +25,8 @@ function Admin() {
   const [stats, setStats]                   = useState(null);
   const [topMovie, setTopMovie]             = useState(null);
   const [recentMovies, setRecentMovies]     = useState([]);
+  const [recentUsers, setRecentUsers]       = useState([]);
+  const [subscribers, setSubscribers]       = useState([]);
   const [movies, setMovies]                 = useState([]);
   const [filteredMovies, setFilteredMovies] = useState([]);
   const [users, setUsers]                   = useState([]);
@@ -46,8 +42,7 @@ function Admin() {
   const [movieForm, setMovieForm]           = useState({
     title: "", genre: "", year: "", duration: "",
     rating: "", isPremium: false, description: "",
-    image: "", banner: "", trailer: "", videoUrl: "",
-    downloadUrl: "", mood: "",
+    image: "", banner: "", trailer: "", videoUrl: "", mood: "",
   });
 
   useEffect(() => { fetchAllData(); }, []);
@@ -76,7 +71,9 @@ function Admin() {
       if (statsData) {
         setStats(statsData.stats);
         setTopMovie(statsData.topMovie);
-        setRecentMovies(statsData.recentMovies);
+        setRecentMovies(statsData.recentMovies || []);
+        setRecentUsers(statsData.recentUsers || []);
+        setSubscribers(statsData.subscribers || []);
       }
       const moviesData = await getAllMovies();
       setMovies(moviesData);
@@ -84,11 +81,11 @@ function Admin() {
       const usersData = await getAdminUsers();
       setUsers(usersData);
       setFilteredUsers(usersData);
-      const watchedData = await getMostWatched(30);
-      setMostWatched(watchedData);
-    } catch (err) {
-      console.error(err);
-    }
+      try {
+        const watchedData = await getMostWatched(30);
+        setMostWatched(watchedData || []);
+      } catch (e) { setMostWatched([]); }
+    } catch (err) { console.error(err); }
     setLoading(false);
   };
 
@@ -108,54 +105,39 @@ function Admin() {
     </div>
   );
 
-  // ── Revenue data (simulated from premium users) ──
-  const totalRevenue     = (stats?.premiumUsers || 0) * MONTHLY_PRICE;
-  const yearlyRevenue    = Math.floor((stats?.premiumUsers || 0) * 0.3) * YEARLY_PRICE;
-  const monthlyRevenue   = Math.floor((stats?.premiumUsers || 0) * 0.7) * MONTHLY_PRICE;
+  const totalRevenue   = (stats?.premiumUsers || 0) * MONTHLY_PRICE;
+  const monthlyRevenue = Math.floor((stats?.premiumUsers || 0) * 0.7) * MONTHLY_PRICE;
+  const yearlyRevenue  = Math.floor((stats?.premiumUsers || 0) * 0.3) * YEARLY_PRICE;
 
-  // ── Monthly revenue chart data (last 6 months) ──
-  const revenueChartData = (() => {
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const now = new Date();
-    return Array.from({ length: 6 }, (_, i) => {
-      const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
-      const base = Math.floor(Math.random() * 5 + 2);
-      return {
-        month: months[d.getMonth()],
-        revenue: base * MONTHLY_PRICE + Math.floor(Math.random() * 2) * YEARLY_PRICE,
-        users: base + Math.floor(Math.random() * 3),
-        premium: base,
-      };
-    });
-  })();
-
-  // ── Genre distribution ──
+  // ✅ Genre distribution
   const genreData = (() => {
     const count = {};
     movies.forEach(m => { count[m.genre] = (count[m.genre] || 0) + 1; });
-    return Object.entries(count)
-      .sort((a, b) => b[1] - a[1])
-      .map(([name, value]) => ({ name, value }));
+    return Object.entries(count).sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }));
   })();
 
-  const PIE_COLORS = ["#dc2626", "#3b82f6", "#22c55e", "#eab308", "#a855f7", "#f97316", "#06b6d4", "#ec4899"];
+  const maxGenre = genreData.length > 0 ? Math.max(...genreData.map(g => g.value)) : 1;
+  const COLORS = ["#dc2626", "#3b82f6", "#22c55e", "#eab308", "#a855f7", "#f97316", "#06b6d4", "#ec4899"];
 
-  // ── User plan distribution ──
-  const planData = [
-    { name: "Premium", value: stats?.premiumUsers || 0, color: "#eab308" },
-    { name: "Free",    value: (stats?.totalUsers || 0) - (stats?.premiumUsers || 0), color: "#6b7280" },
-  ];
+  // ✅ Simulated monthly revenue data
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
+  const revenueData = months.map((month, i) => ({
+    month,
+    revenue: Math.floor(Math.random() * 5 + 2) * MONTHLY_PRICE + (i === 5 ? totalRevenue : 0),
+    users: Math.floor(Math.random() * 5 + 2),
+  }));
+  const maxRevenue = Math.max(...revenueData.map(d => d.revenue), 1);
 
   const handleDeleteMovie = async (id) => {
     if (window.confirm("Delete this movie?")) {
       const result = await deleteAdminMovie(id);
       if (result?.success) { setMovies(movies.filter(m => m._id !== id)); showSuccess("Movie deleted!"); }
-      else showError("Failed to delete movie!");
+      else showError("Failed to delete!");
     }
   };
 
   const handleSaveMovie = async () => {
-    if (!movieForm.title || !movieForm.genre) { showError("Title and Genre are required!"); return; }
+    if (!movieForm.title || !movieForm.genre) { showError("Title and Genre required!"); return; }
     const moodArray = movieForm.mood ? movieForm.mood.split(",").map(m => m.trim()).filter(Boolean) : [];
     const payload = { ...movieForm, rating: parseFloat(movieForm.rating) || 0, year: parseInt(movieForm.year) || 0, mood: moodArray };
     if (editingMovie) {
@@ -165,10 +147,10 @@ function Admin() {
     } else {
       const result = await addAdminMovie(payload);
       if (result?.success) { setMovies([result.movie, ...movies]); showSuccess("Movie added!"); }
-      else showError("Failed to add movie!");
+      else showError("Failed to add!");
     }
     setShowForm(false); setEditingMovie(null);
-    setMovieForm({ title: "", genre: "", year: "", duration: "", rating: "", isPremium: false, description: "", image: "", banner: "", trailer: "", videoUrl: "", downloadUrl: "", mood: "" });
+    setMovieForm({ title: "", genre: "", year: "", duration: "", rating: "", isPremium: false, description: "", image: "", banner: "", trailer: "", videoUrl: "", mood: "" });
   };
 
   const handleEditMovie = (movie) => {
@@ -181,16 +163,17 @@ function Admin() {
     if (window.confirm(`Delete user ${name}?`)) {
       const result = await deleteAdminUser(id);
       if (result?.success) { setUsers(users.filter(u => u._id !== id)); showSuccess("User deleted!"); }
-      else showError(result?.message || "Error deleting user!");
+      else showError(result?.message || "Error!");
     }
   };
 
   const tabs = [
-    { id: "dashboard",  label: "Dashboard",     icon: <FaChartBar /> },
-    { id: "revenue",    label: "Revenue",        icon: <FaMoneyBillWave /> },
-    { id: "analytics",  label: "Analytics",      icon: <FaFire /> },
-    { id: "movies",     label: "Manage Movies",  icon: <FaFilm /> },
-    { id: "users",      label: "Manage Users",   icon: <FaUsers /> },
+    { id: "dashboard",   label: "Dashboard",    icon: <FaChartBar /> },
+    { id: "revenue",     label: "Revenue",       icon: <FaMoneyBillWave /> },
+    { id: "analytics",   label: "Analytics",     icon: <FaFire /> },
+    { id: "movies",      label: "Movies",        icon: <FaFilm /> },
+    { id: "users",       label: "Users",         icon: <FaUsers /> },
+    { id: "subscribers", label: "Subscribers",   icon: <FaCrown /> },
   ];
 
   const inputStyle = {
@@ -207,15 +190,10 @@ function Admin() {
     borderRadius: "16px", padding: "20px",
   };
 
-  const tooltipStyle = {
-    contentStyle: { background: theme.bgCard, border: "1px solid " + theme.border, borderRadius: "10px", color: theme.textMain },
-    labelStyle: { color: theme.textMain, fontWeight: 700 },
-  };
-
   return (
     <div style={{ background: theme.bg, minHeight: "100vh", color: theme.textMain, paddingTop: "70px" }}>
 
-      {/* Toast */}
+      {/* ── Toast ── */}
       {successMsg && (
         <div style={{ position: "fixed", top: "80px", right: "24px", background: "#22c55e", color: "white", padding: "12px 20px", borderRadius: "10px", fontWeight: 700, fontSize: "14px", zIndex: 9999, display: "flex", alignItems: "center", gap: "8px", boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}>
           <FaCheckCircle /> {successMsg}
@@ -246,7 +224,6 @@ function Admin() {
           </div>
 
           <p style={{ color: theme.textSub, fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", margin: "0 0 8px 8px" }}>Navigation</p>
-
           {tabs.map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 14px", borderRadius: "10px", border: "none", cursor: "pointer", fontWeight: 600, fontSize: "14px", background: activeTab === tab.id ? "#dc2626" : "transparent", color: activeTab === tab.id ? "white" : theme.textSub, transition: "all 0.2s", textAlign: "left", width: "100%", marginBottom: "4px" }}>
               {tab.icon} {tab.label}
@@ -272,18 +249,16 @@ function Admin() {
         </div>
 
         {/* ── Main Content ── */}
-        <div style={{ flex: 1, padding: "32px", overflowX: "auto", maxWidth: "calc(100vw - 240px)" }}>
-
+        <div style={{ flex: 1, padding: "32px", overflowX: "auto" }}>
           {loading ? (
             <div style={{ textAlign: "center", paddingTop: "80px" }}>
               <p style={{ color: theme.textSub, fontSize: "18px" }}>⏳ Loading...</p>
             </div>
           ) : (
             <>
-
-              {/* ══════════════════════ */}
-              {/* DASHBOARD TAB         */}
-              {/* ══════════════════════ */}
+              {/* ══════════════════ */}
+              {/* DASHBOARD TAB     */}
+              {/* ══════════════════ */}
               {activeTab === "dashboard" && (
                 <div>
                   <div style={{ marginBottom: "28px" }}>
@@ -291,19 +266,17 @@ function Admin() {
                     <p style={{ color: theme.textSub, margin: 0 }}>Here's your CineStream platform overview.</p>
                   </div>
 
-                  {/* Stats */}
+                  {/* Stats Cards */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "16px", marginBottom: "28px" }}>
                     {[
                       { label: "Total Movies",   value: stats?.totalMovies   || 0, emoji: "🎬", color: "#3b82f6", bg: "#3b82f622" },
                       { label: "Total Users",    value: stats?.totalUsers    || 0, emoji: "👥", color: "#22c55e", bg: "#22c55e22" },
-                      { label: "Premium Movies", value: stats?.premiumMovies || 0, emoji: "💎", color: "#eab308", bg: "#eab30822" },
-                      { label: "Premium Users",  value: stats?.premiumUsers  || 0, emoji: "👑", color: "#a855f7", bg: "#a855f722" },
-                      { label: "Total Revenue",  value: "৳" + totalRevenue.toLocaleString(), emoji: "💰", color: "#22c55e", bg: "#22c55e22" },
+                      { label: "Premium Users",  value: stats?.premiumUsers  || 0, emoji: "💎", color: "#eab308", bg: "#eab30822" },
+                      { label: "Free Users",     value: stats?.freeUsers     || 0, emoji: "🆓", color: "#6b7280", bg: "#6b728022" },
+                      { label: "Total Revenue",  value: "৳" + totalRevenue,       emoji: "💰", color: "#22c55e", bg: "#22c55e22" },
+                      { label: "Premium Movies", value: stats?.premiumMovies || 0, emoji: "👑", color: "#a855f7", bg: "#a855f722" },
                     ].map(stat => (
-                      <div key={stat.label} style={{ ...cardStyle, display: "flex", alignItems: "center", gap: "12px", transition: "box-shadow 0.2s" }}
-                        onMouseEnter={e => e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.15)"}
-                        onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
-                      >
+                      <div key={stat.label} style={{ ...cardStyle, display: "flex", alignItems: "center", gap: "12px" }}>
                         <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: stat.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", flexShrink: 0 }}>{stat.emoji}</div>
                         <div>
                           <p style={{ color: theme.textSub, fontSize: "11px", margin: "0 0 2px", fontWeight: 600 }}>{stat.label}</p>
@@ -313,21 +286,22 @@ function Admin() {
                     ))}
                   </div>
 
-                  {/* Revenue chart mini */}
+                  {/* ✅ CSS Revenue Chart */}
                   <div style={{ ...cardStyle, marginBottom: "20px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
                       <h3 style={{ color: theme.textMain, fontWeight: 800, fontSize: "15px", margin: 0 }}>📈 Revenue Overview (Last 6 Months)</h3>
                       <button onClick={() => setActiveTab("revenue")} style={{ background: "transparent", border: "none", color: "#dc2626", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>View Details →</button>
                     </div>
-                    <ResponsiveContainer width="100%" height={200}>
-                      <LineChart data={revenueChartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke={theme.border} />
-                        <XAxis dataKey="month" stroke={theme.textSub} fontSize={12} />
-                        <YAxis stroke={theme.textSub} fontSize={12} />
-                        <Tooltip {...tooltipStyle} formatter={v => ["৳" + v, "Revenue"]} />
-                        <Line type="monotone" dataKey="revenue" stroke="#dc2626" strokeWidth={3} dot={{ fill: "#dc2626", r: 4 }} activeDot={{ r: 6 }} />
-                      </LineChart>
-                    </ResponsiveContainer>
+                    <div style={{ display: "flex", alignItems: "flex-end", gap: "12px", height: "160px", paddingBottom: "8px" }}>
+                      {revenueData.map((d, i) => (
+                        <div key={d.month} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", height: "100%" }}>
+                          <div style={{ flex: 1, display: "flex", alignItems: "flex-end", width: "100%" }}>
+                            <div style={{ width: "100%", background: i === revenueData.length - 1 ? "#dc2626" : "#dc262688", borderRadius: "6px 6px 0 0", height: `${(d.revenue / maxRevenue) * 100}%`, minHeight: "4px", transition: "height 0.3s" }} />
+                          </div>
+                          <span style={{ color: theme.textSub, fontSize: "11px" }}>{d.month}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "20px" }}>
@@ -362,7 +336,7 @@ function Admin() {
                             <div style={{ width: "26px", height: "26px", borderRadius: "50%", background: index === 0 ? "#eab308" : index === 1 ? "#9ca3af" : "#b45309", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 900, flexShrink: 0 }}>{index + 1}</div>
                             <img src={movie.image} onError={e => { e.target.src = "https://placehold.co/32x44/1a1a2e/ffffff?text=M"; }} style={{ width: "32px", height: "44px", objectFit: "cover", borderRadius: "6px" }} />
                             <div style={{ flex: 1 }}>
-                              <p style={{ color: theme.textMain, fontWeight: 700, fontSize: "13px", margin: "0 0 2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{movie.title}</p>
+                              <p style={{ color: theme.textMain, fontWeight: 700, fontSize: "13px", margin: "0 0 2px" }}>{movie.title}</p>
                               <p style={{ color: theme.textSub, fontSize: "11px", margin: 0 }}>{movie.watchCount} views</p>
                             </div>
                           </div>
@@ -396,9 +370,9 @@ function Admin() {
                         <h3 style={{ color: theme.textMain, fontWeight: 800, fontSize: "15px", margin: 0 }}>👥 Recent Users</h3>
                         <button onClick={() => setActiveTab("users")} style={{ background: "transparent", border: "none", color: "#dc2626", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>View All →</button>
                       </div>
-                      {users.slice(0, 5).map((u, index) => (
+                      {recentUsers.slice(0, 5).map((u, index) => (
                         <div key={u._id} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 0", borderBottom: index < 4 ? "1px solid " + theme.border : "none" }}>
-                          <div style={{ width: "34px", height: "34px", borderRadius: "50%", background: u.isAdmin ? "#dc2626" : "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: 800, fontSize: "13px", flexShrink: 0 }}>
+                          <div style={{ width: "34px", height: "34px", borderRadius: "50%", background: u.isPremium ? "#eab308" : "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: 800, fontSize: "13px", flexShrink: 0 }}>
                             {u.name.charAt(0)}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
@@ -417,141 +391,123 @@ function Admin() {
                 </div>
               )}
 
-              {/* ══════════════════════ */}
-              {/* REVENUE TAB           */}
-              {/* ══════════════════════ */}
+              {/* ══════════════════ */}
+              {/* REVENUE TAB       */}
+              {/* ══════════════════ */}
               {activeTab === "revenue" && (
                 <div>
                   <div style={{ marginBottom: "28px" }}>
                     <h1 style={{ fontSize: "26px", fontWeight: 900, margin: "0 0 4px" }}>💰 Revenue Dashboard</h1>
-                    <p style={{ color: theme.textSub, margin: 0 }}>Track your platform earnings and subscriptions.</p>
+                    <p style={{ color: theme.textSub, margin: 0 }}>Track your platform earnings.</p>
                   </div>
 
                   {/* Revenue Stats */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px", marginBottom: "28px" }}>
                     {[
-                      { label: "Total Revenue",    value: "৳" + totalRevenue.toLocaleString(),  emoji: "💰", color: "#22c55e", bg: "#22c55e22" },
-                      { label: "Monthly Revenue",  value: "৳" + monthlyRevenue.toLocaleString(), emoji: "📅", color: "#3b82f6", bg: "#3b82f622" },
-                      { label: "Yearly Revenue",   value: "৳" + yearlyRevenue.toLocaleString(),  emoji: "📆", color: "#a855f7", bg: "#a855f722" },
-                      { label: "Premium Users",    value: stats?.premiumUsers || 0,              emoji: "👑", color: "#eab308", bg: "#eab30822" },
-                      { label: "Avg per User",     value: "৳" + (stats?.premiumUsers ? Math.floor(totalRevenue / stats.premiumUsers) : 0), emoji: "📊", color: "#f97316", bg: "#f9731622" },
+                      { label: "Total Revenue",   value: "৳" + totalRevenue,   emoji: "💰", color: "#22c55e", bg: "#22c55e22" },
+                      { label: "Monthly Revenue", value: "৳" + monthlyRevenue, emoji: "📅", color: "#3b82f6", bg: "#3b82f622" },
+                      { label: "Yearly Revenue",  value: "৳" + yearlyRevenue,  emoji: "📆", color: "#a855f7", bg: "#a855f722" },
+                      { label: "Subscribers",     value: stats?.premiumUsers || 0, emoji: "👑", color: "#eab308", bg: "#eab30822" },
                     ].map(stat => (
-                      <div key={stat.label} style={{ ...cardStyle, transition: "box-shadow 0.2s" }}
-                        onMouseEnter={e => e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.15)"}
-                        onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
-                      >
-                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                          <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: stat.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", flexShrink: 0 }}>{stat.emoji}</div>
-                          <div>
-                            <p style={{ color: theme.textSub, fontSize: "11px", margin: "0 0 2px", fontWeight: 600 }}>{stat.label}</p>
-                            <p style={{ color: stat.color, fontSize: "20px", fontWeight: 900, margin: 0 }}>{stat.value}</p>
-                          </div>
+                      <div key={stat.label} style={{ ...cardStyle, display: "flex", alignItems: "center", gap: "12px" }}>
+                        <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: stat.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", flexShrink: 0 }}>{stat.emoji}</div>
+                        <div>
+                          <p style={{ color: theme.textSub, fontSize: "11px", margin: "0 0 2px", fontWeight: 600 }}>{stat.label}</p>
+                          <p style={{ color: stat.color, fontSize: "22px", fontWeight: 900, margin: 0 }}>{stat.value}</p>
                         </div>
                       </div>
                     ))}
                   </div>
 
-                  {/* Revenue Bar Chart */}
+                  {/* ✅ CSS Bar Chart */}
                   <div style={{ ...cardStyle, marginBottom: "20px" }}>
                     <h3 style={{ color: theme.textMain, fontWeight: 800, fontSize: "15px", margin: "0 0 20px" }}>📊 Monthly Revenue (Last 6 Months)</h3>
-                    <ResponsiveContainer width="100%" height={280}>
-                      <BarChart data={revenueChartData} barSize={40}>
-                        <CartesianGrid strokeDasharray="3 3" stroke={theme.border} vertical={false} />
-                        <XAxis dataKey="month" stroke={theme.textSub} fontSize={12} />
-                        <YAxis stroke={theme.textSub} fontSize={12} tickFormatter={v => "৳" + v} />
-                        <Tooltip {...tooltipStyle} formatter={v => ["৳" + v, "Revenue"]} />
-                        <Bar dataKey="revenue" fill="#dc2626" radius={[8, 8, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
+                    <div style={{ display: "flex", alignItems: "flex-end", gap: "16px", height: "200px", paddingBottom: "8px" }}>
+                      {revenueData.map((d, i) => (
+                        <div key={d.month} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", height: "100%" }}>
+                          <span style={{ color: theme.textSub, fontSize: "11px", fontWeight: 600 }}>৳{d.revenue}</span>
+                          <div style={{ flex: 1, display: "flex", alignItems: "flex-end", width: "100%" }}>
+                            <div style={{ width: "100%", background: i === revenueData.length - 1 ? "#dc2626" : "#dc262666", borderRadius: "8px 8px 0 0", height: `${(d.revenue / maxRevenue) * 100}%`, minHeight: "4px" }} />
+                          </div>
+                          <span style={{ color: theme.textSub, fontSize: "12px" }}>{d.month}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
+                  {/* Plan Distribution */}
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "20px" }}>
 
-                    {/* Users Line Chart */}
+                    {/* ✅ CSS Donut Chart */}
                     <div style={cardStyle}>
-                      <h3 style={{ color: theme.textMain, fontWeight: 800, fontSize: "15px", margin: "0 0 20px" }}>👥 New Users Per Month</h3>
-                      <ResponsiveContainer width="100%" height={220}>
-                        <LineChart data={revenueChartData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke={theme.border} />
-                          <XAxis dataKey="month" stroke={theme.textSub} fontSize={11} />
-                          <YAxis stroke={theme.textSub} fontSize={11} />
-                          <Tooltip {...tooltipStyle} />
-                          <Legend />
-                          <Line type="monotone" dataKey="users" name="Total Users" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
-                          <Line type="monotone" dataKey="premium" name="Premium" stroke="#eab308" strokeWidth={2} dot={{ r: 3 }} />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-
-                    {/* Plan Distribution Pie */}
-                    <div style={cardStyle}>
-                      <h3 style={{ color: theme.textMain, fontWeight: 800, fontSize: "15px", margin: "0 0 20px" }}>💎 Subscription Distribution</h3>
-                      <ResponsiveContainer width="100%" height={220}>
-                        <PieChart>
-                          <Pie data={planData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={4} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
-                            {planData.map((entry, index) => (
-                              <Cell key={index} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip {...tooltipStyle} />
-                        </PieChart>
-                      </ResponsiveContainer>
-                      <div style={{ display: "flex", justifyContent: "center", gap: "20px", marginTop: "8px" }}>
-                        {planData.map(d => (
-                          <div key={d.name} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                            <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: d.color }} />
-                            <span style={{ color: theme.textSub, fontSize: "12px" }}>{d.name}: {d.value}</span>
+                      <h3 style={{ color: theme.textMain, fontWeight: 800, fontSize: "15px", margin: "0 0 20px" }}>💎 Subscription Split</h3>
+                      <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
+                        {/* Simple visual */}
+                        <div style={{ position: "relative", width: "100px", height: "100px", flexShrink: 0 }}>
+                          <svg viewBox="0 0 36 36" style={{ width: "100px", height: "100px", transform: "rotate(-90deg)" }}>
+                            <circle cx="18" cy="18" r="15.9" fill="none" stroke={theme.border} strokeWidth="3" />
+                            <circle cx="18" cy="18" r="15.9" fill="none" stroke="#eab308" strokeWidth="3"
+                              strokeDasharray={`${stats?.totalUsers ? ((stats.premiumUsers / stats.totalUsers) * 100) : 0} 100`}
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
+                            <span style={{ color: theme.textMain, fontWeight: 900, fontSize: "16px" }}>
+                              {stats?.totalUsers ? Math.round((stats.premiumUsers / stats.totalUsers) * 100) : 0}%
+                            </span>
+                            <span style={{ color: theme.textSub, fontSize: "10px" }}>Premium</span>
                           </div>
-                        ))}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          {[
+                            { label: "Premium", value: stats?.premiumUsers || 0, color: "#eab308" },
+                            { label: "Free",    value: stats?.freeUsers    || 0, color: "#6b7280" },
+                          ].map(d => (
+                            <div key={d.label} style={{ marginBottom: "12px" }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                                <span style={{ color: theme.textSub, fontSize: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
+                                  <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: d.color, display: "inline-block" }} />
+                                  {d.label}
+                                </span>
+                                <span style={{ color: d.color, fontWeight: 700, fontSize: "12px" }}>{d.value}</span>
+                              </div>
+                              <div style={{ background: theme.bgInput, borderRadius: "999px", height: "6px" }}>
+                                <div style={{ background: d.color, borderRadius: "999px", height: "100%", width: `${stats?.totalUsers ? (d.value / stats.totalUsers) * 100 : 0}%` }} />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Revenue by Plan Table */}
-                  <div style={cardStyle}>
-                    <h3 style={{ color: theme.textMain, fontWeight: 800, fontSize: "15px", margin: "0 0 20px" }}>📋 Revenue Breakdown</h3>
-                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                      <thead>
-                        <tr style={{ background: theme.bgInput }}>
-                          {["Plan", "Users", "Price", "Revenue", "Share"].map(h => (
-                            <th key={h} style={{ padding: "12px 16px", textAlign: "left", color: theme.textSub, fontSize: "11px", fontWeight: 700, textTransform: "uppercase" }}>{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[
-                          { plan: "Monthly Premium", users: Math.floor((stats?.premiumUsers || 0) * 0.7), price: "৳199/month", revenue: Math.floor((stats?.premiumUsers || 0) * 0.7) * 199, color: "#3b82f6" },
-                          { plan: "Yearly Premium",  users: Math.floor((stats?.premiumUsers || 0) * 0.3), price: "৳1499/year", revenue: Math.floor((stats?.premiumUsers || 0) * 0.3) * 1499, color: "#a855f7" },
-                          { plan: "Free",            users: (stats?.totalUsers || 0) - (stats?.premiumUsers || 0), price: "৳0", revenue: 0, color: "#6b7280" },
-                        ].map((row, index) => (
-                          <tr key={row.plan} style={{ borderTop: "1px solid " + theme.border }}>
-                            <td style={{ padding: "14px 16px" }}>
-                              <span style={{ color: row.color, fontWeight: 700, fontSize: "14px" }}>{row.plan}</span>
-                            </td>
-                            <td style={{ padding: "14px 16px", color: theme.textMain, fontWeight: 700 }}>{row.users}</td>
-                            <td style={{ padding: "14px 16px", color: theme.textSub }}>{row.price}</td>
-                            <td style={{ padding: "14px 16px", color: "#22c55e", fontWeight: 800 }}>৳{row.revenue.toLocaleString()}</td>
-                            <td style={{ padding: "14px 16px" }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <div style={{ flex: 1, background: theme.bgInput, borderRadius: "999px", height: "6px", overflow: "hidden" }}>
-                                  <div style={{ background: row.color, height: "100%", width: totalRevenue > 0 ? `${(row.revenue / totalRevenue) * 100}%` : "0%", borderRadius: "999px" }} />
-                                </div>
-                                <span style={{ color: theme.textSub, fontSize: "12px", flexShrink: 0 }}>
-                                  {totalRevenue > 0 ? `${Math.round((row.revenue / totalRevenue) * 100)}%` : "0%"}
-                                </span>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                    {/* Revenue Breakdown */}
+                    <div style={cardStyle}>
+                      <h3 style={{ color: theme.textMain, fontWeight: 800, fontSize: "15px", margin: "0 0 20px" }}>📋 Revenue Breakdown</h3>
+                      {[
+                        { plan: "Monthly Premium", users: Math.floor((stats?.premiumUsers || 0) * 0.7), price: "৳199/mo", revenue: Math.floor((stats?.premiumUsers || 0) * 0.7) * 199, color: "#3b82f6" },
+                        { plan: "Yearly Premium",  users: Math.floor((stats?.premiumUsers || 0) * 0.3), price: "৳1499/yr", revenue: Math.floor((stats?.premiumUsers || 0) * 0.3) * 1499, color: "#a855f7" },
+                      ].map(row => (
+                        <div key={row.plan} style={{ padding: "14px", background: theme.bgInput, borderRadius: "12px", marginBottom: "10px" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+                            <span style={{ color: row.color, fontWeight: 700, fontSize: "14px" }}>{row.plan}</span>
+                            <span style={{ color: "#22c55e", fontWeight: 800, fontSize: "14px" }}>৳{row.revenue}</span>
+                          </div>
+                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+                            <span style={{ color: theme.textSub, fontSize: "12px" }}>{row.users} users × {row.price}</span>
+                          </div>
+                          <div style={{ background: theme.border, borderRadius: "999px", height: "6px" }}>
+                            <div style={{ background: row.color, borderRadius: "999px", height: "100%", width: totalRevenue > 0 ? `${(row.revenue / totalRevenue) * 100}%` : "0%" }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* ══════════════════════ */}
-              {/* ANALYTICS TAB         */}
-              {/* ══════════════════════ */}
+              {/* ══════════════════ */}
+              {/* ANALYTICS TAB     */}
+              {/* ══════════════════ */}
               {activeTab === "analytics" && (
                 <div>
                   <div style={{ marginBottom: "28px" }}>
@@ -559,15 +515,14 @@ function Admin() {
                     <p style={{ color: theme.textSub, margin: 0 }}>Platform performance and content analytics.</p>
                   </div>
 
-                  {/* Platform Stats */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "16px", marginBottom: "28px" }}>
                     {[
                       { label: "Total Movies",   value: stats?.totalMovies   || 0, emoji: "🎬", color: "#3b82f6" },
                       { label: "Total Users",    value: stats?.totalUsers    || 0, emoji: "👥", color: "#22c55e" },
                       { label: "Premium Users",  value: stats?.premiumUsers  || 0, emoji: "💎", color: "#eab308" },
-                      { label: "Free Users",     value: (stats?.totalUsers || 0) - (stats?.premiumUsers || 0), emoji: "🆓", color: "#6b7280" },
+                      { label: "Free Users",     value: stats?.freeUsers     || 0, emoji: "🆓", color: "#6b7280" },
                       { label: "Premium Movies", value: stats?.premiumMovies || 0, emoji: "👑", color: "#a855f7" },
-                      { label: "Free Movies",    value: (stats?.totalMovies || 0) - (stats?.premiumMovies || 0), emoji: "🎥", color: "#22c55e" },
+                      { label: "Free Movies",    value: stats?.freeMovies    || 0, emoji: "🎥", color: "#22c55e" },
                     ].map(stat => (
                       <div key={stat.label} style={{ ...cardStyle, textAlign: "center" }}>
                         <div style={{ fontSize: "28px", marginBottom: "8px" }}>{stat.emoji}</div>
@@ -577,43 +532,25 @@ function Admin() {
                     ))}
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "20px" }}>
-
-                    {/* Genre Pie Chart */}
-                    <div style={cardStyle}>
-                      <h3 style={{ color: theme.textMain, fontWeight: 800, fontSize: "15px", margin: "0 0 20px" }}>🎭 Movies by Genre</h3>
-                      <ResponsiveContainer width="100%" height={250}>
-                        <PieChart>
-                          <Pie data={genreData} cx="50%" cy="50%" outerRadius={90} dataKey="value" label={({ name, value }) => `${name}: ${value}`} labelLine={true}>
-                            {genreData.map((_, index) => (
-                              <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip {...tooltipStyle} />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-
-                    {/* Genre Bar Chart */}
-                    <div style={cardStyle}>
-                      <h3 style={{ color: theme.textMain, fontWeight: 800, fontSize: "15px", margin: "0 0 20px" }}>📊 Genre Distribution</h3>
-                      <ResponsiveContainer width="100%" height={250}>
-                        <BarChart data={genreData} layout="vertical" barSize={18}>
-                          <CartesianGrid strokeDasharray="3 3" stroke={theme.border} horizontal={false} />
-                          <XAxis type="number" stroke={theme.textSub} fontSize={11} />
-                          <YAxis type="category" dataKey="name" stroke={theme.textSub} fontSize={11} width={70} />
-                          <Tooltip {...tooltipStyle} />
-                          <Bar dataKey="value" name="Movies" radius={[0, 6, 6, 0]}>
-                            {genreData.map((_, index) => (
-                              <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                            ))}
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
+                  {/* ✅ CSS Genre Chart */}
+                  <div style={{ ...cardStyle, marginBottom: "20px" }}>
+                    <h3 style={{ color: theme.textMain, fontWeight: 800, fontSize: "15px", margin: "0 0 20px" }}>🎭 Movies by Genre</h3>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                      {genreData.map((g, index) => (
+                        <div key={g.name}>
+                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                            <span style={{ color: theme.textMain, fontSize: "13px", fontWeight: 600 }}>{g.name}</span>
+                            <span style={{ color: COLORS[index % COLORS.length], fontWeight: 700, fontSize: "13px" }}>{g.value} movies</span>
+                          </div>
+                          <div style={{ background: theme.bgInput, borderRadius: "999px", height: "10px", overflow: "hidden" }}>
+                            <div style={{ background: COLORS[index % COLORS.length], borderRadius: "999px", height: "100%", width: `${(g.value / maxGenre) * 100}%`, transition: "width 0.5s ease" }} />
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
-                  {/* Most Watched Full List */}
+                  {/* Most Watched */}
                   <div style={cardStyle}>
                     <h3 style={{ color: theme.textMain, fontWeight: 800, fontSize: "16px", margin: "0 0 20px", display: "flex", alignItems: "center", gap: "8px" }}>
                       <FaFire style={{ color: "#ef4444" }} /> Most Watched (Last 30 Days)
@@ -622,7 +559,7 @@ function Admin() {
                       <div style={{ textAlign: "center", padding: "40px" }}>
                         <p style={{ fontSize: "40px", margin: "0 0 12px" }}>📊</p>
                         <p style={{ color: theme.textMain, fontWeight: 700, margin: "0 0 8px" }}>No watch data yet</p>
-                        <p style={{ color: theme.textSub, fontSize: "13px", margin: 0 }}>Users need to watch movies to see analytics</p>
+                        <p style={{ color: theme.textSub, fontSize: "13px", margin: 0 }}>Users need to watch movies first</p>
                       </div>
                     ) : (
                       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -632,17 +569,14 @@ function Admin() {
                             <img src={movie.image} onError={e => { e.target.src = "https://placehold.co/40x56/1a1a2e/ffffff?text=M"; }} style={{ width: "40px", height: "56px", objectFit: "cover", borderRadius: "8px", flexShrink: 0 }} />
                             <div style={{ flex: 1 }}>
                               <p style={{ color: theme.textMain, fontWeight: 700, fontSize: "14px", margin: "0 0 4px" }}>{movie.title}</p>
-                              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                                <span style={{ background: "#dc262622", color: "#dc2626", fontSize: "11px", padding: "2px 8px", borderRadius: "999px", fontWeight: 600 }}>{movie.genre}</span>
-                                <span style={{ color: "#facc15", fontSize: "12px", fontWeight: 700 }}>⭐ {movie.rating}</span>
-                              </div>
+                              <span style={{ background: "#dc262622", color: "#dc2626", fontSize: "11px", padding: "2px 8px", borderRadius: "999px", fontWeight: 600 }}>{movie.genre}</span>
                             </div>
-                            <div style={{ textAlign: "right", flexShrink: 0, marginRight: "12px" }}>
+                            <div style={{ textAlign: "right", flexShrink: 0, marginRight: "8px" }}>
                               <p style={{ color: "#ef4444", fontWeight: 900, fontSize: "18px", margin: "0 0 2px" }}>{movie.watchCount}</p>
                               <p style={{ color: theme.textSub, fontSize: "11px", margin: 0 }}>views</p>
                             </div>
-                            <div style={{ width: "100px", flexShrink: 0 }}>
-                              <div style={{ background: theme.border, borderRadius: "999px", height: "6px", overflow: "hidden" }}>
+                            <div style={{ width: "80px", flexShrink: 0 }}>
+                              <div style={{ background: theme.border, borderRadius: "999px", height: "6px" }}>
                                 <div style={{ background: "#ef4444", borderRadius: "999px", height: "100%", width: `${Math.min((movie.watchCount / (mostWatched[0]?.watchCount || 1)) * 100, 100)}%` }} />
                               </div>
                             </div>
@@ -654,9 +588,9 @@ function Admin() {
                 </div>
               )}
 
-              {/* ══════════════════════ */}
-              {/* MOVIES TAB            */}
-              {/* ══════════════════════ */}
+              {/* ══════════════════ */}
+              {/* MOVIES TAB        */}
+              {/* ══════════════════ */}
               {activeTab === "movies" && (
                 <div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", flexWrap: "wrap", gap: "12px" }}>
@@ -664,12 +598,11 @@ function Admin() {
                       <h1 style={{ fontSize: "24px", fontWeight: 900, margin: "0 0 4px" }}>🎬 Manage Movies</h1>
                       <p style={{ color: theme.textSub, margin: 0, fontSize: "14px" }}>{movies.length} movies total</p>
                     </div>
-                    <button onClick={() => { setShowForm(true); setEditingMovie(null); setMovieForm({ title: "", genre: "", year: "", duration: "", rating: "", isPremium: false, description: "", image: "", banner: "", trailer: "", videoUrl: "", downloadUrl: "", mood: "" }); }} style={{ background: "#dc2626", color: "white", border: "none", padding: "10px 20px", borderRadius: "10px", fontWeight: 700, fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <button onClick={() => { setShowForm(true); setEditingMovie(null); setMovieForm({ title: "", genre: "", year: "", duration: "", rating: "", isPremium: false, description: "", image: "", banner: "", trailer: "", videoUrl: "", mood: "" }); }} style={{ background: "#dc2626", color: "white", border: "none", padding: "10px 20px", borderRadius: "10px", fontWeight: 700, fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}>
                       <FaPlus /> Add Movie
                     </button>
                   </div>
 
-                  {/* Form */}
                   {showForm && (
                     <div style={{ ...cardStyle, marginBottom: "24px" }}>
                       <h3 style={{ color: theme.textMain, fontWeight: 800, fontSize: "16px", margin: "0 0 20px" }}>
@@ -677,17 +610,16 @@ function Admin() {
                       </h3>
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "14px", marginBottom: "14px" }}>
                         {[
-                          { label: "Title *",       key: "title",       placeholder: "Movie title" },
-                          { label: "Genre *",       key: "genre",       placeholder: "Action, Comedy..." },
-                          { label: "Year",          key: "year",        placeholder: "2024" },
-                          { label: "Duration",      key: "duration",    placeholder: "2h 30m" },
-                          { label: "Rating",        key: "rating",      placeholder: "4.5" },
-                          { label: "Image URL",     key: "image",       placeholder: "https://..." },
-                          { label: "Banner URL",    key: "banner",      placeholder: "https://..." },
-                          { label: "Trailer URL",   key: "trailer",     placeholder: "https://youtube.com/embed/..." },
-                          { label: "Video URL",     key: "videoUrl",    placeholder: "https://youtube.com/embed/..." },
-                          { label: "Download URL",  key: "downloadUrl", placeholder: "https://drive.google.com/..." },
-                          { label: "Mood (comma)",  key: "mood",        placeholder: "happy, excited, romantic" },
+                          { label: "Title *",      key: "title",    placeholder: "Movie title" },
+                          { label: "Genre *",      key: "genre",    placeholder: "Action, Comedy..." },
+                          { label: "Year",         key: "year",     placeholder: "2024" },
+                          { label: "Duration",     key: "duration", placeholder: "2h 30m" },
+                          { label: "Rating",       key: "rating",   placeholder: "4.5" },
+                          { label: "Image URL",    key: "image",    placeholder: "https://..." },
+                          { label: "Banner URL",   key: "banner",   placeholder: "https://..." },
+                          { label: "Trailer URL",  key: "trailer",  placeholder: "https://youtube.com/embed/..." },
+                          { label: "Video URL",    key: "videoUrl", placeholder: "https://youtube.com/embed/..." },
+                          { label: "Mood (comma)", key: "mood",     placeholder: "happy, excited" },
                         ].map(field => (
                           <div key={field.key}>
                             <label style={{ color: theme.textSub, fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "6px" }}>{field.label}</label>
@@ -714,13 +646,11 @@ function Admin() {
                     </div>
                   )}
 
-                  {/* Search */}
                   <div style={{ position: "relative", marginBottom: "16px", maxWidth: "320px" }}>
                     <FaSearch style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: theme.textSub, fontSize: "13px" }} />
                     <input type="text" placeholder="Search movies..." value={movieSearch} onChange={e => setMovieSearch(e.target.value)} style={{ ...inputStyle, paddingLeft: "34px" }} />
                   </div>
 
-                  {/* Table */}
                   <div style={{ ...cardStyle, padding: 0, overflow: "auto" }}>
                     <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "700px" }}>
                       <thead>
@@ -732,7 +662,7 @@ function Admin() {
                       </thead>
                       <tbody>
                         {filteredMovies.map((movie, index) => (
-                          <tr key={movie._id} style={{ borderTop: index > 0 ? "1px solid " + theme.border : "none", transition: "background 0.15s" }}
+                          <tr key={movie._id} style={{ borderTop: index > 0 ? "1px solid " + theme.border : "none" }}
                             onMouseEnter={e => e.currentTarget.style.background = theme.bgInput + "80"}
                             onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                           >
@@ -743,7 +673,7 @@ function Admin() {
                               <p style={{ margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{movie.title}</p>
                             </td>
                             <td style={{ padding: "10px 16px" }}>
-                              <span style={{ background: "#dc262622", color: "#dc2626", fontSize: "11px", padding: "3px 10px", borderRadius: "999px", fontWeight: 600, whiteSpace: "nowrap" }}>{movie.genre}</span>
+                              <span style={{ background: "#dc262622", color: "#dc2626", fontSize: "11px", padding: "3px 10px", borderRadius: "999px", fontWeight: 600 }}>{movie.genre}</span>
                             </td>
                             <td style={{ padding: "10px 16px", color: theme.textSub, fontSize: "14px" }}>{movie.year}</td>
                             <td style={{ padding: "10px 16px", color: "#facc15", fontWeight: 700, fontSize: "14px" }}>⭐ {movie.rating}</td>
@@ -782,9 +712,9 @@ function Admin() {
                 </div>
               )}
 
-              {/* ══════════════════════ */}
-              {/* USERS TAB             */}
-              {/* ══════════════════════ */}
+              {/* ══════════════════ */}
+              {/* USERS TAB         */}
+              {/* ══════════════════ */}
               {activeTab === "users" && (
                 <div>
                   <div style={{ marginBottom: "24px" }}>
@@ -792,7 +722,6 @@ function Admin() {
                     <p style={{ color: theme.textSub, margin: 0, fontSize: "14px" }}>{users.length} total • {users.filter(u => u.isPremium).length} premium • {users.filter(u => !u.isPremium).length} free</p>
                   </div>
 
-                  {/* Search */}
                   <div style={{ position: "relative", marginBottom: "16px", maxWidth: "320px" }}>
                     <FaSearch style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: theme.textSub, fontSize: "13px" }} />
                     <input type="text" placeholder="Search users..." value={userSearch} onChange={e => setUserSearch(e.target.value)} style={{ ...inputStyle, paddingLeft: "34px" }} />
@@ -809,7 +738,7 @@ function Admin() {
                       </thead>
                       <tbody>
                         {filteredUsers.map((u, index) => (
-                          <tr key={u._id} style={{ borderTop: index > 0 ? "1px solid " + theme.border : "none", transition: "background 0.15s" }}
+                          <tr key={u._id} style={{ borderTop: index > 0 ? "1px solid " + theme.border : "none" }}
                             onMouseEnter={e => e.currentTarget.style.background = theme.bgInput + "80"}
                             onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                           >
@@ -855,6 +784,86 @@ function Admin() {
                       <div style={{ textAlign: "center", padding: "40px", color: theme.textSub }}>No users found</div>
                     )}
                   </div>
+                </div>
+              )}
+
+              {/* ══════════════════ */}
+              {/* SUBSCRIBERS TAB   */}
+              {/* ══════════════════ */}
+              {activeTab === "subscribers" && (
+                <div>
+                  <div style={{ marginBottom: "24px" }}>
+                    <h1 style={{ fontSize: "24px", fontWeight: 900, margin: "0 0 4px" }}>💎 Premium Subscribers</h1>
+                    <p style={{ color: theme.textSub, fontSize: "14px", margin: 0 }}>
+                      {subscribers.length} subscribers • Total: <span style={{ color: "#22c55e", fontWeight: 700 }}>৳{totalRevenue}</span>
+                    </p>
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px", marginBottom: "24px" }}>
+                    {[
+                      { label: "Total Subscribers", value: subscribers.length,                                             emoji: "💎", color: "#eab308" },
+                      { label: "Total Revenue",      value: "৳" + totalRevenue,                                            emoji: "💰", color: "#22c55e" },
+                      { label: "Monthly Plan",       value: subscribers.filter(u => u.premiumPlan !== "yearly").length,    emoji: "📅", color: "#3b82f6" },
+                      { label: "Yearly Plan",        value: subscribers.filter(u => u.premiumPlan === "yearly").length,    emoji: "🗓️", color: "#a855f7" },
+                    ].map(s => (
+                      <div key={s.label} style={{ ...cardStyle, display: "flex", alignItems: "center", gap: "14px" }}>
+                        <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: s.color + "22", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px" }}>{s.emoji}</div>
+                        <div>
+                          <p style={{ color: theme.textSub, fontSize: "12px", margin: "0 0 4px", fontWeight: 600 }}>{s.label}</p>
+                          <p style={{ color: s.color, fontSize: "22px", fontWeight: 900, margin: 0 }}>{s.value}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {subscribers.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: "60px", background: theme.bgCard, borderRadius: "16px", border: "1px solid " + theme.border }}>
+                      <p style={{ fontSize: "48px", margin: "0 0 16px" }}>💎</p>
+                      <p style={{ color: theme.textMain, fontSize: "18px", fontWeight: 700, margin: 0 }}>No subscribers yet</p>
+                    </div>
+                  ) : (
+                    <div style={{ ...cardStyle, padding: 0, overflow: "auto" }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "500px" }}>
+                        <thead>
+                          <tr style={{ background: theme.bgInput, borderBottom: "1px solid " + theme.border }}>
+                            {["#", "Name", "Email", "Plan", "Amount", "Joined"].map(h => (
+                              <th key={h} style={{ padding: "12px 16px", textAlign: "left", color: theme.textSub, fontSize: "11px", fontWeight: 700, textTransform: "uppercase" }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {subscribers.map((u, index) => (
+                            <tr key={u._id} style={{ borderTop: index > 0 ? "1px solid " + theme.border : "none" }}
+                              onMouseEnter={e => e.currentTarget.style.background = theme.bgInput + "80"}
+                              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                            >
+                              <td style={{ padding: "14px 16px", color: theme.textSub }}>{index + 1}</td>
+                              <td style={{ padding: "14px 16px" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                  <div style={{ width: "34px", height: "34px", borderRadius: "50%", background: "#eab308", display: "flex", alignItems: "center", justifyContent: "center", color: "black", fontWeight: 800, fontSize: "14px" }}>
+                                    {u.name.charAt(0)}
+                                  </div>
+                                  <span style={{ color: theme.textMain, fontWeight: 700, fontSize: "14px" }}>{u.name}</span>
+                                </div>
+                              </td>
+                              <td style={{ padding: "14px 16px", color: theme.textSub, fontSize: "13px" }}>{u.email}</td>
+                              <td style={{ padding: "14px 16px" }}>
+                                <span style={{ background: "#eab30822", color: "#eab308", fontSize: "11px", padding: "3px 10px", borderRadius: "999px", fontWeight: 700 }}>
+                                  {u.premiumPlan === "yearly" ? "📅 Yearly" : "📅 Monthly"}
+                                </span>
+                              </td>
+                              <td style={{ padding: "14px 16px", color: "#22c55e", fontWeight: 700, fontSize: "14px" }}>
+                                ৳{u.premiumPlan === "yearly" ? "1499" : "199"}
+                              </td>
+                              <td style={{ padding: "14px 16px", color: theme.textSub, fontSize: "13px" }}>
+                                {new Date(u.createdAt).toLocaleDateString()}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               )}
 

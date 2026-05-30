@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { getAllMovies } from "../services/movieService";
 import { useTheme } from "../context/ThemeContext";
 import MovieCard from "../components/MovieCard";
@@ -11,6 +12,7 @@ function Home() {
   const [allMovies, setAllMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   const { theme } = useTheme();
+  const navigate = useNavigate();
 
   // 🎬 Fetch movies from backend
   useEffect(() => {
@@ -108,7 +110,6 @@ function Home() {
             scrollbarColor: "#374151 transparent",
           }}>
             {filteredMovies.map((movie) => (
-              // ✅ Use movie._id because MongoDB uses _id
               <MovieCard key={movie._id} movie={movie} />
             ))}
           </div>
@@ -116,16 +117,19 @@ function Home() {
 
         {/* ── View All Button ── */}
         <div style={{ textAlign: "center", marginTop: "48px" }}>
-          <button style={{
-            border: "1px solid " + theme.border,
-            background: "transparent",
-            color: theme.textSub,
-            padding: "12px 32px",
-            borderRadius: "12px",
-            fontWeight: 600,
-            fontSize: "15px",
-            cursor: "pointer",
-          }}>
+          <button
+            onClick={() => navigate("/movies")}
+            style={{
+              border: "1px solid " + theme.border,
+              background: "transparent",
+              color: theme.textSub,
+              padding: "12px 32px",
+              borderRadius: "12px",
+              fontWeight: 600,
+              fontSize: "15px",
+              cursor: "pointer",
+            }}
+          >
             View All Movies →
           </button>
         </div>

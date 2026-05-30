@@ -17,6 +17,9 @@ import MostWatched from "./components/MostWatched";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
 import Dashboard from "./pages/Dashboard";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import CookiePolicy from "./pages/CookiePolicy";
 
 function App() {
   const { theme } = useTheme();
@@ -45,6 +48,9 @@ function App() {
             <Route path="/payment/success"  element={<PaymentSuccess />} />
             <Route path="/admin"            element={<Admin />} />
             <Route path="/dashboard"        element={<Dashboard />} />
+            <Route path="/privacy"          element={<PrivacyPolicy />} />
+            <Route path="/terms"            element={<TermsOfService />} />
+            <Route path="/cookies"          element={<CookiePolicy />} />
           </Routes>
         </div>
         <Footer />

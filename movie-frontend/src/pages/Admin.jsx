@@ -228,16 +228,27 @@ function Admin() {
   const totalRevenue    = monthlyRevenue + yearlyRevenue;
 
   // ── Chart data ──
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
-  const revenueChartData = months.map((label, i) => ({
-    label,
-    value: Math.floor((premiumUsers * 0.6 + i * 0.5 + Math.random() * 2) * MONTHLY_PRICE),
-  }));
+  // ✅ Dynamic last 6 months based on real current date
+const getLast6Months = () => {
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const now = new Date();
+  return Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
+    return monthNames[d.getMonth()];
+  });
+};
 
-  const userGrowthData = months.map((label, i) => ({
-    label,
-    value: Math.floor(totalUsers * (0.4 + i * 0.12)),
-  }));
+const last6Months = getLast6Months();
+
+const revenueChartData = last6Months.map((label, i) => ({
+  label,
+  value: Math.max(0, Math.floor((premiumUsers * (0.3 + i * 0.1)) * MONTHLY_PRICE)),
+}));
+
+const userGrowthData = last6Months.map((label, i) => ({
+  label,
+  value: Math.max(1, Math.floor(totalUsers * (0.4 + i * 0.1))),
+}));
 
   const genreData = (() => {
     const count = {};
@@ -344,7 +355,7 @@ function Admin() {
               {user.name.charAt(0).toUpperCase()}
             </div>
             <p style={{ color: "white", fontWeight: 800, fontSize: "14px", margin: "0 0 2px" }}>{user.name}</p>
-            <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "11px", margin: "0 0 10px" }}>👑 Administrator</p>
+            <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "11px", margin: "0 0 10px" }}> Administrator</p>
             <div style={{ background: "rgba(255,255,255,0.15)", borderRadius: "8px", padding: "8px" }}>
               <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "10px", margin: "0 0 2px" }}>Est. Revenue</p>
               <p style={{ color: "white", fontSize: "16px", fontWeight: 900, margin: 0 }}>৳{totalRevenue.toLocaleString()}</p>
@@ -390,7 +401,7 @@ function Admin() {
               {activeTab === "dashboard" && (
                 <div>
                   <div style={{ marginBottom: "28px" }}>
-                    <h1 style={{ fontSize: "26px", fontWeight: 900, margin: "0 0 4px" }}>👋 Welcome, {user.name}!</h1>
+                    <h1 style={{ fontSize: "26px", fontWeight: 900, margin: "0 0 4px" }}> Welcome, {user.name}!</h1>
                     <p style={{ color: theme.textSub, margin: 0 }}>CineStream platform overview</p>
                   </div>
 
@@ -417,7 +428,7 @@ function Admin() {
                   {card(
                     <>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                        {sectionTitle("📈 Revenue Trend (Last 6 Months)")}
+                        {sectionTitle(" Revenue Trend (Last 6 Months)")}
                         <button onClick={() => setActiveTab("revenue")} style={{ background: "transparent", border: "none", color: "#dc2626", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>View Details →</button>
                       </div>
                       <LineChart data={revenueChartData} color="#dc2626" height={140} valuePrefix="৳" />
@@ -429,7 +440,7 @@ function Admin() {
                     {/* Top Rated */}
                     {topMovie && card(
                       <>
-                        {sectionTitle("⭐ Top Rated Movie")}
+                        {sectionTitle(" Top Rated Movie")}
                         <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
                           <img src={topMovie.image} alt={topMovie.title} onError={e => { e.target.src = "https://placehold.co/60x80/1a1a2e/ffffff?text=M"; }} style={{ width: "60px", height: "80px", objectFit: "cover", borderRadius: "10px" }} />
                           <div>
@@ -444,7 +455,7 @@ function Admin() {
                     {/* Most Watched */}
                     {card(
                       <>
-                        {sectionTitle("🔥 Most Watched (30 days)")}
+                        {sectionTitle(" Most Watched (30 days)")}
                         {mostWatched.length === 0 ? (
                           <p style={{ color: theme.textSub, fontSize: "13px" }}>No watch data yet</p>
                         ) : mostWatched.slice(0, 3).map((movie, index) => (
@@ -512,7 +523,7 @@ function Admin() {
               {activeTab === "revenue" && (
                 <div>
                   <div style={{ marginBottom: "28px" }}>
-                    <h1 style={{ fontSize: "26px", fontWeight: 900, margin: "0 0 4px" }}>💰 Revenue Dashboard</h1>
+                    <h1 style={{ fontSize: "26px", fontWeight: 900, margin: "0 0 4px" }}> Revenue Dashboard</h1>
                     <p style={{ color: theme.textSub, margin: 0 }}>Track platform earnings and subscriptions.</p>
                   </div>
 
@@ -536,7 +547,7 @@ function Admin() {
                   {/* Revenue Bar Chart */}
                   {card(
                     <>
-                      {sectionTitle("📊 Monthly Revenue (Last 6 Months)")}
+                      {sectionTitle(" Monthly Revenue (Last 6 Months)")}
                       <BarChart data={revenueChartData} color="#dc2626" valuePrefix="৳" height={180} />
                     </>,
                     { marginBottom: "20px" }
@@ -554,7 +565,7 @@ function Admin() {
                     {/* Subscription Donut */}
                     {card(
                       <>
-                        {sectionTitle("💎 Subscription Split")}
+                        {sectionTitle(" Subscription Split")}
                         <DonutChart data={planDonutData} size={160} />
                       </>
                     )}
@@ -563,7 +574,7 @@ function Admin() {
                   {/* Revenue Breakdown Table */}
                   {card(
                     <>
-                      {sectionTitle("📋 Revenue Breakdown")}
+                      {sectionTitle(" Revenue Breakdown")}
                       <table style={{ width: "100%", borderCollapse: "collapse" }}>
                         <thead>
                           <tr style={{ background: theme.bgInput }}>
@@ -608,7 +619,7 @@ function Admin() {
               {activeTab === "analytics" && (
                 <div>
                   <div style={{ marginBottom: "28px" }}>
-                    <h1 style={{ fontSize: "26px", fontWeight: 900, margin: "0 0 4px" }}>🔥 Analytics</h1>
+                    <h1 style={{ fontSize: "26px", fontWeight: 900, margin: "0 0 4px" }}> Analytics</h1>
                     <p style={{ color: theme.textSub, margin: 0 }}>Content and user analytics.</p>
                   </div>
 
@@ -634,7 +645,7 @@ function Admin() {
                     {/* Genre Bar Chart */}
                     {card(
                       <>
-                        {sectionTitle("🎭 Movies by Genre")}
+                        {sectionTitle(" Movies by Genre")}
                         <BarChart data={genreData} color="#3b82f6" height={180} />
                       </>
                     )}
@@ -642,7 +653,7 @@ function Admin() {
                     {/* Movie Type Donut */}
                     {card(
                       <>
-                        {sectionTitle("🎬 Movie Type Split")}
+                        {sectionTitle(" Movie Type Split")}
                         <DonutChart data={movieTypeData} size={160} />
                       </>
                     )}
@@ -651,7 +662,7 @@ function Admin() {
                   {/* Genre Progress Bars */}
                   {card(
                     <>
-                      {sectionTitle("📊 Genre Distribution")}
+                      {sectionTitle(" Genre Distribution")}
                       {genreData.map((g, index) => (
                         <div key={g.label} style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
                           <span style={{ color: theme.textMain, fontWeight: 600, fontSize: "13px", width: "80px", flexShrink: 0 }}>{g.label}</span>
@@ -668,7 +679,7 @@ function Admin() {
                   {/* Most Watched */}
                   {card(
                     <>
-                      {sectionTitle("🔥 Most Watched (Last 30 Days)")}
+                      {sectionTitle(" Most Watched (Last 30 Days)")}
                       {mostWatched.length === 0 ? (
                         <div style={{ textAlign: "center", padding: "40px" }}>
                           <p style={{ fontSize: "40px", margin: "0 0 12px" }}>📊</p>
@@ -709,7 +720,7 @@ function Admin() {
                 <div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", flexWrap: "wrap", gap: "12px" }}>
                     <div>
-                      <h1 style={{ fontSize: "24px", fontWeight: 900, margin: "0 0 4px" }}>🎬 Manage Movies</h1>
+                      <h1 style={{ fontSize: "24px", fontWeight: 900, margin: "0 0 4px" }}> Manage Movies</h1>
                       <p style={{ color: theme.textSub, margin: 0, fontSize: "14px" }}>{movies.length} movies total</p>
                     </div>
                     <button onClick={() => { setShowForm(true); setEditingMovie(null); setMovieForm({ title: "", genre: "", year: "", duration: "", rating: "", isPremium: false, description: "", image: "", banner: "", trailer: "", videoUrl: "", downloadUrl: "", mood: "" }); }} style={{ background: "#dc2626", color: "white", border: "none", padding: "10px 20px", borderRadius: "10px", fontWeight: 700, fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}>
@@ -818,7 +829,7 @@ function Admin() {
               {activeTab === "users" && (
                 <div>
                   <div style={{ marginBottom: "24px" }}>
-                    <h1 style={{ fontSize: "24px", fontWeight: 900, margin: "0 0 4px" }}>👥 Manage Users</h1>
+                    <h1 style={{ fontSize: "24px", fontWeight: 900, margin: "0 0 4px" }}> Manage Users</h1>
                     <p style={{ color: theme.textSub, margin: 0, fontSize: "14px" }}>{users.length} total • {users.filter(u => u.isPremium).length} premium • {users.filter(u => !u.isPremium).length} free</p>
                   </div>
 

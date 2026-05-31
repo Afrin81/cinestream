@@ -4,7 +4,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { useWatchlist } from "../context/WatchlistContext";
 import { getMovieById, getSimilarMovies, saveWatchHistory } from "../services/movieService";
-import { FaPlay, FaPlus, FaArrowLeft, FaStar, FaFilm, FaLock, FaCrown } from "react-icons/fa";
+import { FaPlay, FaPlus, FaArrowLeft, FaFilm, FaLock, FaCrown } from "react-icons/fa";
 import MovieCard from "../components/MovieCard";
 
 function MovieDetail() {
@@ -15,9 +15,6 @@ function MovieDetail() {
   const { user, isPremium } = useAuth();
   const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
 
-  const [userRating, setUserRating]       = useState(0);
-  const [hoveredStar, setHoveredStar]     = useState(0);
-  const [rated, setRated]                 = useState(false);
   const [showTrailer, setShowTrailer]     = useState(false);
   const [showMovie, setShowMovie]         = useState(false);
   const [movie, setMovie]                 = useState(null);
@@ -61,20 +58,12 @@ function MovieDetail() {
     );
   }
 
-  const handleRate = (star) => {
-    if (!user) { navigate("/login"); return; }
-    setUserRating(star);
-    setRated(true);
-  };
-
   const handleWatch = () => {
     if (!user) { navigate("/login"); return; }
     if (movie.isPremium && !isPremium) { navigate("/payment"); return; }
 
-    // ✅ Save to backend for most watched feature
     saveWatchHistory(movie._id);
 
-    // ✅ Save to localStorage for dashboard history
     const historyKey = `recentlyWatched_${user._id}`;
     const history = JSON.parse(localStorage.getItem(historyKey) || "[]");
     const exists = history.find(m => m._id === movie._id);
@@ -148,6 +137,7 @@ function MovieDetail() {
         <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", padding: "0 40px", paddingTop: "70px", maxWidth: "1280px", margin: "0 auto", left: 0, right: 0 }}>
           <div style={{ display: "flex", gap: "48px", alignItems: "flex-end", flexWrap: "wrap" }}>
 
+            {/* Poster */}
             <div style={{ flexShrink: 0, position: "relative" }}>
               <img
                 src={movie.image}
@@ -165,6 +155,7 @@ function MovieDetail() {
               )}
             </div>
 
+            {/* Info */}
             <div style={{ maxWidth: "600px" }}>
               {movie.isPremium && (
                 <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "#eab308", color: "black", fontSize: "12px", padding: "4px 14px", borderRadius: "999px", fontWeight: 700, marginBottom: "12px" }}>
@@ -187,6 +178,7 @@ function MovieDetail() {
                 {movie.description}
               </p>
 
+              {/* Buttons */}
               <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
                 <button
                   onClick={handleWatch}
@@ -211,6 +203,7 @@ function MovieDetail() {
                 </button>
               </div>
 
+              {/* Hints */}
               <div style={{ marginTop: "16px" }}>
                 {!user && (
                   <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "13px", margin: 0, display: "flex", alignItems: "center", gap: "6px" }}>
@@ -241,36 +234,6 @@ function MovieDetail() {
 
       {/* ── Below Banner ── */}
       <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "48px 32px 60px" }}>
-        <div style={{ background: theme.bgCard, border: "1px solid " + theme.border, borderRadius: "20px", padding: "28px 32px", marginBottom: "48px", display: "flex", alignItems: "center", gap: "32px", flexWrap: "wrap" }}>
-          <div>
-            <h3 style={{ color: theme.textMain, fontWeight: 800, fontSize: "18px", margin: "0 0 6px" }}>Rate This Movie</h3>
-            <p style={{ color: theme.textSub, fontSize: "13px", margin: 0 }}>Share your opinion with other viewers</p>
-          </div>
-          <div style={{ display: "flex", gap: "8px" }}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <button
-                key={star}
-                onClick={() => handleRate(star)}
-                onMouseEnter={() => setHoveredStar(star)}
-                onMouseLeave={() => setHoveredStar(0)}
-                style={{ background: "none", border: "none", cursor: "pointer", fontSize: "32px", color: star <= (hoveredStar || userRating) ? "#facc15" : theme.border, transition: "color 0.15s, transform 0.15s", transform: star <= hoveredStar ? "scale(1.2)" : "scale(1)", padding: "0" }}
-              >
-                <FaStar />
-              </button>
-            ))}
-          </div>
-          {rated && (
-            <div style={{ background: "#dcfce7", border: "1px solid #86efac", color: "#166534", padding: "10px 20px", borderRadius: "10px", fontWeight: 600, fontSize: "14px" }}>
-              Thanks for rating {userRating} star{userRating > 1 ? "s" : ""}! ⭐
-            </div>
-          )}
-          {!user && (
-            <p style={{ color: theme.textSub, fontSize: "14px", margin: 0 }}>
-              <span onClick={() => navigate("/login")} style={{ color: "#dc2626", cursor: "pointer", fontWeight: 700 }}>Login</span>{" "}to rate this movie
-            </p>
-          )}
-        </div>
-
         {similarMovies.length > 0 && (
           <div>
             <h2 style={{ fontSize: "24px", fontWeight: 800, margin: "0 0 24px", color: theme.textMain }}>

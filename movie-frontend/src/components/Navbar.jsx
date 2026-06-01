@@ -94,7 +94,7 @@ function Navbar() {
           }}
         >
           {/* Logo */}
-          <Link to="/" style={{ textDecoration: "none", fontSize: "22px", fontWeight: 900, color: "#dc2626" }}>
+          <Link to="/" style={{ textDecoration: "none", fontSize: "22px", fontWeight: 900, color: "yellow" }}>
              CineStream
           </Link>
 
